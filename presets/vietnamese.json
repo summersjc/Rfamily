@@ -1,0 +1,122 @@
+{
+  "names": {
+    "male_given_names": [
+      "Anh",
+      "Dũng",
+      "Hùng",
+      "Tuấn",
+      "Minh",
+      "Phong",
+      "Quân",
+      "Thành",
+      "Hải",
+      "Long",
+      "Bảo",
+      "Khoa",
+      "Nam",
+      "Đức",
+      "Hoàng"
+    ],
+    "female_given_names": [
+      "Lan",
+      "Hương",
+      "Mai",
+      "Hoa",
+      "Linh",
+      "Nga",
+      "Thu",
+      "Hằng",
+      "Trang",
+      "Thảo",
+      "Phương",
+      "Nhung",
+      "Vy",
+      "Giang",
+      "Tâm"
+    ],
+    "surnames": [
+      "Nguyễn",
+      "Trần",
+      "Lê",
+      "Phạm",
+      "Hoàng",
+      "Phan",
+      "Vũ",
+      "Đặng",
+      "Bùi",
+      "Đỗ",
+      "Hồ",
+      "Ngô",
+      "Dương",
+      "Lý",
+      "Võ"
+    ],
+    "use_patronymic": false,
+    "use_matronymic": false,
+    "name_format": "WesternStyle"
+  },
+  "dates": {
+    "birth_year_start": 1700,
+    "birth_year_end": 2010,
+    "min_marriage_age": 18,
+    "max_marriage_age": 45,
+    "min_parent_age": 16,
+    "max_parent_age": 50,
+    "life_expectancy_mean": 75,
+    "life_expectancy_stddev": 15,
+    "include_death_dates": true
+  },
+  "locations": {
+    "countries": [
+      {
+        "name": "Vietnam",
+        "language": "Vietnamese",
+        "cities": [
+          "Ho Chi Minh City",
+          "Hanoi",
+          "Da Nang",
+          "Haiphong",
+          "Can Tho",
+          "Bien Hoa",
+          "Hue",
+          "Nha Trang"
+        ],
+        "probability_weight": 1.0
+      }
+    ],
+    "default_country": "Vietnam"
+  },
+  "demographics": {
+    "sex_ratio": 0.51,
+    "twin_rate": 0.032,
+    "triplet_rate": 0.001,
+    "languages": [
+      "Vietnamese"
+    ]
+  },
+  "relationships": {
+    "marriage_probability": 0.85,
+    "divorce_probability": 0.4,
+    "remarriage_probability": 0.5,
+    "children_mean": 2.5,
+    "children_stddev": 1.5,
+    "min_children": 0,
+    "max_children": 12,
+    "generate_families": true,
+    "multi_generational": true,
+    "generations": 4
+  },
+  "ordinances": {
+    "include_lds_ordinances": false,
+    "baptism_probability": 0.0,
+    "confirmation_probability": 0.0,
+    "endowment_probability": 0.0,
+    "sealing_to_parents_probability": 0.0,
+    "sealing_to_spouse_probability": 0.0,
+    "temples": [
+      "SLAKE",
+      "PROVO",
+      "MANTI"
+    ]
+  }
+}

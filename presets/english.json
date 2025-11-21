@@ -1,0 +1,157 @@
+{
+  "names": {
+    "male_given_names": [
+      "James",
+      "John",
+      "Robert",
+      "Michael",
+      "William",
+      "David",
+      "Richard",
+      "Joseph",
+      "Thomas",
+      "Charles",
+      "Christopher",
+      "Daniel",
+      "Matthew",
+      "Anthony",
+      "Donald",
+      "Mark",
+      "Paul",
+      "Steven",
+      "Andrew",
+      "Kenneth",
+      "Joshua",
+      "George",
+      "Edward"
+    ],
+    "female_given_names": [
+      "Mary",
+      "Patricia",
+      "Jennifer",
+      "Linda",
+      "Elizabeth",
+      "Barbara",
+      "Susan",
+      "Jessica",
+      "Sarah",
+      "Karen",
+      "Nancy",
+      "Lisa",
+      "Margaret",
+      "Betty",
+      "Dorothy",
+      "Sandra",
+      "Ashley",
+      "Kimberly",
+      "Emily",
+      "Donna",
+      "Michelle",
+      "Carol",
+      "Amanda"
+    ],
+    "surnames": [
+      "Smith",
+      "Johnson",
+      "Williams",
+      "Brown",
+      "Jones",
+      "Garcia",
+      "Miller",
+      "Davis",
+      "Rodriguez",
+      "Martinez",
+      "Hernandez",
+      "Lopez",
+      "Gonzalez",
+      "Wilson",
+      "Anderson",
+      "Thomas",
+      "Taylor",
+      "Moore",
+      "Jackson",
+      "Martin",
+      "Lee",
+      "Thompson",
+      "White",
+      "Harris",
+      "Clark",
+      "Lewis",
+      "Robinson",
+      "Walker",
+      "Young",
+      "Allen",
+      "King"
+    ],
+    "use_patronymic": false,
+    "use_matronymic": false,
+    "name_format": "WesternStyle"
+  },
+  "dates": {
+    "birth_year_start": 1700,
+    "birth_year_end": 2010,
+    "min_marriage_age": 18,
+    "max_marriage_age": 45,
+    "min_parent_age": 16,
+    "max_parent_age": 50,
+    "life_expectancy_mean": 75,
+    "life_expectancy_stddev": 15,
+    "include_death_dates": true
+  },
+  "locations": {
+    "countries": [
+      {
+        "name": "United States",
+        "language": "English",
+        "cities": [
+          "New York, New York",
+          "Los Angeles, California",
+          "Chicago, Illinois",
+          "Houston, Texas",
+          "Phoenix, Arizona",
+          "Philadelphia, Pennsylvania",
+          "San Antonio, Texas",
+          "San Diego, California",
+          "Dallas, Texas",
+          "Boston, Massachusetts",
+          "Salt Lake City, Utah"
+        ],
+        "probability_weight": 1.0
+      }
+    ],
+    "default_country": "United States"
+  },
+  "demographics": {
+    "sex_ratio": 0.51,
+    "twin_rate": 0.032,
+    "triplet_rate": 0.001,
+    "languages": [
+      "English"
+    ]
+  },
+  "relationships": {
+    "marriage_probability": 0.85,
+    "divorce_probability": 0.4,
+    "remarriage_probability": 0.5,
+    "children_mean": 2.5,
+    "children_stddev": 1.5,
+    "min_children": 0,
+    "max_children": 12,
+    "generate_families": true,
+    "multi_generational": true,
+    "generations": 4
+  },
+  "ordinances": {
+    "include_lds_ordinances": false,
+    "baptism_probability": 0.0,
+    "confirmation_probability": 0.0,
+    "endowment_probability": 0.0,
+    "sealing_to_parents_probability": 0.0,
+    "sealing_to_spouse_probability": 0.0,
+    "temples": [
+      "SLAKE",
+      "PROVO",
+      "MANTI"
+    ]
+  }
+}
