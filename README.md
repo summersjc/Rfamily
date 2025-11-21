@@ -6,6 +6,12 @@
 
 A high-performance Rust command-line tool for generating GEDCOM files with millions of people records using customizable rulesets.
 
+## Installation
+
+See [INSTALL.md](INSTALL.md) for detailed installation instructions for all platforms.
+
+**Quick install:** Download the binary for your platform from the [latest release](https://github.com/summersjc/Rfamily/releases/latest).
+
 ## Features
 
 - **51 Language Presets**: Built-in support for European, Asian, Middle Eastern, Pacific, African, and Latin American languages with culturally appropriate names and locations
@@ -19,14 +25,13 @@ A high-performance Rust command-line tool for generating GEDCOM files with milli
 - **Highly Configurable**: Customize every aspect through JSON ruleset files
 - **Single Binary**: All 51 presets embedded - no external files needed
 
-## Prerequisites
+## Quick Start
 
-- Rust 1.70 or higher
-- Cargo (comes with Rust)
+See [INSTALL.md](INSTALL.md) for detailed installation instructions.
 
-## Installation
+**Download:** Get the binary for your platform from the [latest release](https://github.com/summersjc/Rfamily/releases/latest).
 
-### Quick Install (Recommended)
+## Usage
 
 ```bash
 git clone https://github.com/yourusername/Rfamily.git
@@ -68,19 +73,19 @@ The binary is completely self-contained with all 51 language presets embedded at
 
 **Binary Size:** ~1.5 MB (includes all presets and dependencies)
 
-## Quick Start
+## Usage Examples
 
-### Using the standalone binary
+### Using the binary
 
 ```bash
 # List all available language presets
-./target/release/rfamily --list-presets
+rfamily --list-presets
 
 # Generate with a specific language preset
-./target/release/rfamily --preset japanese --count 100000 --output japan.ged
+rfamily --preset japanese --count 100000 --output japan.ged
 
 # Generate with custom count and output file
-./target/release/rfamily -p german -c 50000 -o germany.ged
+rfamily -p german -c 50000 -o germany.ged
 ```
 
 ### Using cargo run (for development)
