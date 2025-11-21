@@ -463,21 +463,28 @@ fn test_error_generate_ruleset_invalid_path() {
 
 #[test]
 fn test_error_generate_ruleset_overwrite() {
-    let ruleset_file = "test_ruleset_overwrite.json";
-    cleanup_file(ruleset_file);
+    use std::time::{SystemTime, UNIX_EPOCH};
+    
+    // Use timestamp to ensure unique filename and avoid parallel test conflicts
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let ruleset_file = format!("test_ruleset_overwrite_{}.json", timestamp);
+    cleanup_file(&ruleset_file);
 
     // Generate ruleset first time
-    let output1 = run_rfamily(&["--generate-ruleset", ruleset_file]);
+    let output1 = run_rfamily(&["--generate-ruleset", &ruleset_file]);
     assert!(output1.status.success());
 
     // Generate again - should overwrite
-    let output2 = run_rfamily(&["--generate-ruleset", ruleset_file]);
+    let output2 = run_rfamily(&["--generate-ruleset", &ruleset_file]);
     assert!(
         output2.status.success(),
         "Should succeed overwriting ruleset"
     );
 
-    cleanup_file(ruleset_file);
+    cleanup_file(&ruleset_file);
 }
 
 #[test]
