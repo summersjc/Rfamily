@@ -108,6 +108,9 @@ Example preset structure:
 git clone https://github.com/summersjc/Rfamily.git
 cd Rfamily
 
+# Install Git hooks (recommended)
+./hooks/install.sh
+
 # Build debug version
 cargo build
 
