@@ -1,21 +1,21 @@
-mod ruleset;
 mod generator;
 mod preset_registry;
+mod ruleset;
 
 use clap::Parser;
+use generator::GedcomGenerator;
 use indicatif::{ProgressBar, ProgressStyle};
+use preset_registry::PresetRegistry;
+use ruleset::Ruleset;
 use std::fs::File;
 use std::io::BufWriter;
-use ruleset::Ruleset;
-use generator::GedcomGenerator;
-use preset_registry::PresetRegistry;
 
 fn determine_preset_name(args: &Args) -> Option<String> {
     // Check new --preset flag first
     if let Some(ref preset) = args.preset {
         return Some(preset.clone());
     }
-    
+
     // Fall back to deprecated flags for backward compatibility
     if args.lds {
         eprintln!("Warning: --lds is deprecated. Use --preset lds instead.");
@@ -37,7 +37,7 @@ fn determine_preset_name(args: &Args) -> Option<String> {
         eprintln!("Warning: --italian is deprecated. Use --preset italian instead.");
         return Some("italian".to_string());
     }
-    
+
     None
 }
 
@@ -111,19 +111,19 @@ fn main() -> std::io::Result<()> {
         let ruleset = if let Some(name) = preset_name {
             registry.load(&name).expect("Failed to load preset")
         } else {
-            registry.load("english").expect("Failed to load default preset")
+            registry
+                .load("english")
+                .expect("Failed to load default preset")
         };
-        
-        ruleset.save_to_file(path)
-            .expect("Failed to save ruleset");
+
+        ruleset.save_to_file(path).expect("Failed to save ruleset");
         println!("Generated ruleset file: {}", path);
         return Ok(());
     }
-    
+
     // Load ruleset
     let ruleset = if let Some(ref path) = args.ruleset {
-        Ruleset::load_from_file(path)
-            .expect("Failed to load ruleset file")
+        Ruleset::load_from_file(path).expect("Failed to load ruleset file")
     } else {
         let preset_name = determine_preset_name(&args);
         if let Some(name) = preset_name {
@@ -132,16 +132,18 @@ fn main() -> std::io::Result<()> {
                 std::process::exit(1);
             })
         } else {
-            registry.load("english").expect("Failed to load default preset")
+            registry
+                .load("english")
+                .expect("Failed to load default preset")
         }
     };
 
     println!("Rfamily v0.2.0");
     println!("Generating {} individuals to {}", args.count, args.output);
-    
+
     let mut rng = rand::thread_rng();
     let mut generator = GedcomGenerator::new(ruleset);
-    
+
     // Progress bar setup
     let pb = ProgressBar::new(args.count as u64);
     pb.set_style(
@@ -150,18 +152,21 @@ fn main() -> std::io::Result<()> {
             .unwrap()
             .progress_chars("##-"),
     );
-    
+
     // Generate data
     generator.generate(args.count, &mut rng);
     pb.finish_with_message("Generation complete");
-    
+
     // Write to file
     let file = File::create(&args.output)?;
     let mut writer = BufWriter::new(file);
     generator.write_gedcom(&mut writer)?;
-    
-    println!("Successfully generated GEDCOM file with {} individuals", args.count);
-    
+
+    println!(
+        "Successfully generated GEDCOM file with {} individuals",
+        args.count
+    );
+
     Ok(())
 }
 
@@ -184,7 +189,7 @@ mod tests {
             french: false,
             italian: false,
         };
-        
+
         assert_eq!(determine_preset_name(&args), Some("japanese".to_string()));
     }
 
@@ -203,7 +208,7 @@ mod tests {
             french: false,
             italian: false,
         };
-        
+
         assert_eq!(determine_preset_name(&args), Some("lds".to_string()));
     }
 
@@ -222,7 +227,7 @@ mod tests {
             french: false,
             italian: false,
         };
-        
+
         assert_eq!(determine_preset_name(&args), Some("icelandic".to_string()));
     }
 
@@ -241,7 +246,7 @@ mod tests {
             french: false,
             italian: false,
         };
-        
+
         assert_eq!(determine_preset_name(&args), Some("spanish".to_string()));
     }
 
@@ -260,7 +265,7 @@ mod tests {
             french: true,
             italian: false,
         };
-        
+
         assert_eq!(determine_preset_name(&args), Some("french".to_string()));
     }
 
@@ -279,7 +284,7 @@ mod tests {
             french: false,
             italian: true,
         };
-        
+
         assert_eq!(determine_preset_name(&args), Some("italian".to_string()));
     }
 
@@ -298,7 +303,7 @@ mod tests {
             french: false,
             italian: false,
         };
-        
+
         assert_eq!(determine_preset_name(&args), None);
     }
 
@@ -312,13 +317,13 @@ mod tests {
             list_presets: false,
             ruleset: None,
             generate_ruleset: None,
-            lds: true,  // This should be ignored
+            lds: true, // This should be ignored
             icelandic: false,
             spanish: false,
             french: false,
             italian: false,
         };
-        
+
         assert_eq!(determine_preset_name(&args), Some("german".to_string()));
     }
 
@@ -326,7 +331,7 @@ mod tests {
     fn test_args_default_values() {
         // Test that clap default values work
         let args = Args::parse_from(&["rfamily"]);
-        
+
         assert_eq!(args.count, 100000);
         assert_eq!(args.output, "output.ged");
         assert_eq!(args.preset, None);
@@ -337,8 +342,16 @@ mod tests {
 
     #[test]
     fn test_args_with_preset() {
-        let args = Args::parse_from(&["rfamily", "--preset", "korean", "--count", "5000", "--output", "korea.ged"]);
-        
+        let args = Args::parse_from(&[
+            "rfamily",
+            "--preset",
+            "korean",
+            "--count",
+            "5000",
+            "--output",
+            "korea.ged",
+        ]);
+
         assert_eq!(args.preset, Some("korean".to_string()));
         assert_eq!(args.count, 5000);
         assert_eq!(args.output, "korea.ged");
@@ -347,14 +360,14 @@ mod tests {
     #[test]
     fn test_args_with_list_presets() {
         let args = Args::parse_from(&["rfamily", "--list-presets"]);
-        
+
         assert_eq!(args.list_presets, true);
     }
 
     #[test]
     fn test_args_with_ruleset_file() {
         let args = Args::parse_from(&["rfamily", "--ruleset", "custom.json", "--count", "1000"]);
-        
+
         assert_eq!(args.ruleset, Some("custom.json".to_string()));
         assert_eq!(args.count, 1000);
     }
@@ -362,17 +375,17 @@ mod tests {
     #[test]
     fn test_args_with_generate_ruleset() {
         let args = Args::parse_from(&["rfamily", "--generate-ruleset", "example.json"]);
-        
+
         assert_eq!(args.generate_ruleset, Some("example.json".to_string()));
     }
 
     #[test]
     fn test_args_short_flags() {
-        let args = Args::parse_from(&["rfamily", "-c", "50000", "-o", "family.ged", "-p", "polish"]);
-        
+        let args =
+            Args::parse_from(&["rfamily", "-c", "50000", "-o", "family.ged", "-p", "polish"]);
+
         assert_eq!(args.count, 50000);
         assert_eq!(args.output, "family.ged");
         assert_eq!(args.preset, Some("polish".to_string()));
     }
 }
-

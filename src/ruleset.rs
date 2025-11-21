@@ -24,10 +24,10 @@ pub struct NameRules {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum NameFormat {
-    WesternStyle,      // Given Surname
-    EasternStyle,      // Surname Given
-    Patronymic,        // Given Patronymic
-    IcelandicStyle,    // Given Patronymic/Matronymic
+    WesternStyle,   // Given Surname
+    EasternStyle,   // Surname Given
+    Patronymic,     // Given Patronymic
+    IcelandicStyle, // Given Patronymic/Matronymic
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -59,7 +59,7 @@ pub struct Country {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DemographicRules {
-    pub sex_ratio: f64,  // Probability of male (0.0-1.0)
+    pub sex_ratio: f64, // Probability of male (0.0-1.0)
     pub twin_rate: f64,
     pub triplet_rate: f64,
     pub languages: Vec<String>,
@@ -110,21 +110,97 @@ impl Ruleset {
         Ruleset {
             names: NameRules {
                 male_given_names: vec![
-                    "James", "John", "Robert", "Michael", "William", "David", "Richard", "Joseph",
-                    "Thomas", "Charles", "Christopher", "Daniel", "Matthew", "Anthony", "Donald",
-                    "Mark", "Paul", "Steven", "Andrew", "Kenneth", "Joshua", "George", "Edward",
-                ].iter().map(|s| s.to_string()).collect(),
+                    "James",
+                    "John",
+                    "Robert",
+                    "Michael",
+                    "William",
+                    "David",
+                    "Richard",
+                    "Joseph",
+                    "Thomas",
+                    "Charles",
+                    "Christopher",
+                    "Daniel",
+                    "Matthew",
+                    "Anthony",
+                    "Donald",
+                    "Mark",
+                    "Paul",
+                    "Steven",
+                    "Andrew",
+                    "Kenneth",
+                    "Joshua",
+                    "George",
+                    "Edward",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 female_given_names: vec![
-                    "Mary", "Patricia", "Jennifer", "Linda", "Elizabeth", "Barbara", "Susan",
-                    "Jessica", "Sarah", "Karen", "Nancy", "Lisa", "Margaret", "Betty", "Dorothy",
-                    "Sandra", "Ashley", "Kimberly", "Emily", "Donna", "Michelle", "Carol", "Amanda",
-                ].iter().map(|s| s.to_string()).collect(),
+                    "Mary",
+                    "Patricia",
+                    "Jennifer",
+                    "Linda",
+                    "Elizabeth",
+                    "Barbara",
+                    "Susan",
+                    "Jessica",
+                    "Sarah",
+                    "Karen",
+                    "Nancy",
+                    "Lisa",
+                    "Margaret",
+                    "Betty",
+                    "Dorothy",
+                    "Sandra",
+                    "Ashley",
+                    "Kimberly",
+                    "Emily",
+                    "Donna",
+                    "Michelle",
+                    "Carol",
+                    "Amanda",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 surnames: vec![
-                    "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
-                    "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson",
-                    "Thomas", "Taylor", "Moore", "Jackson", "Martin", "Lee", "Thompson", "White",
-                    "Harris", "Clark", "Lewis", "Robinson", "Walker", "Young", "Allen", "King",
-                ].iter().map(|s| s.to_string()).collect(),
+                    "Smith",
+                    "Johnson",
+                    "Williams",
+                    "Brown",
+                    "Jones",
+                    "Garcia",
+                    "Miller",
+                    "Davis",
+                    "Rodriguez",
+                    "Martinez",
+                    "Hernandez",
+                    "Lopez",
+                    "Gonzalez",
+                    "Wilson",
+                    "Anderson",
+                    "Thomas",
+                    "Taylor",
+                    "Moore",
+                    "Jackson",
+                    "Martin",
+                    "Lee",
+                    "Thompson",
+                    "White",
+                    "Harris",
+                    "Clark",
+                    "Lewis",
+                    "Robinson",
+                    "Walker",
+                    "Young",
+                    "Allen",
+                    "King",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 use_patronymic: false,
                 use_matronymic: false,
                 name_format: NameFormat::WesternStyle,
@@ -141,23 +217,31 @@ impl Ruleset {
                 include_death_dates: true,
             },
             locations: LocationRules {
-                countries: vec![
-                    Country {
-                        name: "United States".to_string(),
-                        language: "English".to_string(),
-                        cities: vec![
-                            "New York, New York", "Los Angeles, California", "Chicago, Illinois",
-                            "Houston, Texas", "Phoenix, Arizona", "Philadelphia, Pennsylvania",
-                            "San Antonio, Texas", "San Diego, California", "Dallas, Texas",
-                            "Boston, Massachusetts", "Salt Lake City, Utah",
-                        ].iter().map(|s| s.to_string()).collect(),
-                        probability_weight: 1.0,
-                    },
-                ],
+                countries: vec![Country {
+                    name: "United States".to_string(),
+                    language: "English".to_string(),
+                    cities: vec![
+                        "New York, New York",
+                        "Los Angeles, California",
+                        "Chicago, Illinois",
+                        "Houston, Texas",
+                        "Phoenix, Arizona",
+                        "Philadelphia, Pennsylvania",
+                        "San Antonio, Texas",
+                        "San Diego, California",
+                        "Dallas, Texas",
+                        "Boston, Massachusetts",
+                        "Salt Lake City, Utah",
+                    ]
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect(),
+                    probability_weight: 1.0,
+                }],
                 default_country: "United States".to_string(),
             },
             demographics: DemographicRules {
-                sex_ratio: 0.51,  // Slightly more males at birth
+                sex_ratio: 0.51, // Slightly more males at birth
                 twin_rate: 0.032,
                 triplet_rate: 0.001,
                 languages: vec!["English".to_string()],
@@ -182,9 +266,9 @@ impl Ruleset {
                 sealing_to_parents_probability: 0.0,
                 sealing_to_spouse_probability: 0.0,
                 temples: vec![
-                    "SLAKE".to_string(),  // Salt Lake Temple
-                    "PROVO".to_string(),   // Provo City Center Temple
-                    "MANTI".to_string(),   // Manti Temple
+                    "SLAKE".to_string(), // Salt Lake Temple
+                    "PROVO".to_string(), // Provo City Center Temple
+                    "MANTI".to_string(), // Manti Temple
                 ],
             },
         }
@@ -201,9 +285,15 @@ impl Ruleset {
             sealing_to_parents_probability: 0.90,
             sealing_to_spouse_probability: 0.85,
             temples: vec![
-                "SLAKE".to_string(), "PROVO".to_string(), "MANTI".to_string(),
-                "LOGAN".to_string(), "STGEO".to_string(), "VERNA".to_string(),
-                "MONTI".to_string(), "BOISE".to_string(), "DENVE".to_string(),
+                "SLAKE".to_string(),
+                "PROVO".to_string(),
+                "MANTI".to_string(),
+                "LOGAN".to_string(),
+                "STGEO".to_string(),
+                "VERNA".to_string(),
+                "MONTI".to_string(),
+                "BOISE".to_string(),
+                "DENVE".to_string(),
             ],
         };
         ruleset
@@ -214,14 +304,44 @@ impl Ruleset {
         Ruleset {
             names: NameRules {
                 male_given_names: vec![
-                    "Jón", "Sigurður", "Guðmundur", "Gunnar", "Ólafur", "Einar", "Kristján",
-                    "Magnús", "Stefán", "Jóhann", "Árni", "Þór", "Bjarni", "Helgi",
-                ].iter().map(|s| s.to_string()).collect(),
+                    "Jón",
+                    "Sigurður",
+                    "Guðmundur",
+                    "Gunnar",
+                    "Ólafur",
+                    "Einar",
+                    "Kristján",
+                    "Magnús",
+                    "Stefán",
+                    "Jóhann",
+                    "Árni",
+                    "Þór",
+                    "Bjarni",
+                    "Helgi",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 female_given_names: vec![
-                    "Guðrún", "Anna", "Kristín", "Margrét", "Sigríður", "Helga", "Ingibjörg",
-                    "María", "Jóhanna", "Katrín", "Sigrún", "Ásta", "Elín", "Eva",
-                ].iter().map(|s| s.to_string()).collect(),
-                surnames: vec![],  // Icelandic uses patronymics
+                    "Guðrún",
+                    "Anna",
+                    "Kristín",
+                    "Margrét",
+                    "Sigríður",
+                    "Helga",
+                    "Ingibjörg",
+                    "María",
+                    "Jóhanna",
+                    "Katrín",
+                    "Sigrún",
+                    "Ásta",
+                    "Elín",
+                    "Eva",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+                surnames: vec![], // Icelandic uses patronymics
                 use_patronymic: true,
                 use_matronymic: true,
                 name_format: NameFormat::IcelandicStyle,
@@ -238,17 +358,24 @@ impl Ruleset {
                 include_death_dates: true,
             },
             locations: LocationRules {
-                countries: vec![
-                    Country {
-                        name: "Iceland".to_string(),
-                        language: "Icelandic".to_string(),
-                        cities: vec![
-                            "Reykjavík", "Kópavogur", "Hafnarfjörður", "Akureyri",
-                            "Reykjanesbær", "Garðabær", "Mosfellsbær", "Selfoss",
-                        ].iter().map(|s| s.to_string()).collect(),
-                        probability_weight: 1.0,
-                    },
-                ],
+                countries: vec![Country {
+                    name: "Iceland".to_string(),
+                    language: "Icelandic".to_string(),
+                    cities: vec![
+                        "Reykjavík",
+                        "Kópavogur",
+                        "Hafnarfjörður",
+                        "Akureyri",
+                        "Reykjanesbær",
+                        "Garðabær",
+                        "Mosfellsbær",
+                        "Selfoss",
+                    ]
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect(),
+                    probability_weight: 1.0,
+                }],
                 default_country: "Iceland".to_string(),
             },
             demographics: DemographicRules {
@@ -286,23 +413,108 @@ impl Ruleset {
         Ruleset {
             names: NameRules {
                 male_given_names: vec![
-                    "José", "Antonio", "Manuel", "Francisco", "Juan", "David", "José Antonio",
-                    "Carlos", "Javier", "Miguel", "Jesús", "Pedro", "Alejandro", "Fernando",
-                    "Luis", "Sergio", "Pablo", "Jorge", "Alberto", "Ángel", "Rafael", "Daniel",
-                    "Raúl", "Enrique", "Ramón", "Vicente", "Diego", "Andrés", "Ricardo",
-                ].iter().map(|s| s.to_string()).collect(),
+                    "José",
+                    "Antonio",
+                    "Manuel",
+                    "Francisco",
+                    "Juan",
+                    "David",
+                    "José Antonio",
+                    "Carlos",
+                    "Javier",
+                    "Miguel",
+                    "Jesús",
+                    "Pedro",
+                    "Alejandro",
+                    "Fernando",
+                    "Luis",
+                    "Sergio",
+                    "Pablo",
+                    "Jorge",
+                    "Alberto",
+                    "Ángel",
+                    "Rafael",
+                    "Daniel",
+                    "Raúl",
+                    "Enrique",
+                    "Ramón",
+                    "Vicente",
+                    "Diego",
+                    "Andrés",
+                    "Ricardo",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 female_given_names: vec![
-                    "María", "Carmen", "Ana", "Isabel", "Dolores", "Pilar", "Teresa", "Rosa",
-                    "Francisca", "Antonia", "Josefa", "Lucía", "María Carmen", "Elena", "Laura",
-                    "Marta", "Cristina", "Paula", "Sara", "Raquel", "Patricia", "Beatriz",
-                    "Silvia", "Natalia", "Carolina", "Andrea", "Sofía", "Claudia", "Alba",
-                ].iter().map(|s| s.to_string()).collect(),
+                    "María",
+                    "Carmen",
+                    "Ana",
+                    "Isabel",
+                    "Dolores",
+                    "Pilar",
+                    "Teresa",
+                    "Rosa",
+                    "Francisca",
+                    "Antonia",
+                    "Josefa",
+                    "Lucía",
+                    "María Carmen",
+                    "Elena",
+                    "Laura",
+                    "Marta",
+                    "Cristina",
+                    "Paula",
+                    "Sara",
+                    "Raquel",
+                    "Patricia",
+                    "Beatriz",
+                    "Silvia",
+                    "Natalia",
+                    "Carolina",
+                    "Andrea",
+                    "Sofía",
+                    "Claudia",
+                    "Alba",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 surnames: vec![
-                    "García", "Rodríguez", "González", "Fernández", "López", "Martínez", "Sánchez",
-                    "Pérez", "Gómez", "Martín", "Jiménez", "Ruiz", "Hernández", "Díaz", "Moreno",
-                    "Muñoz", "Álvarez", "Romero", "Alonso", "Gutiérrez", "Navarro", "Torres",
-                    "Domínguez", "Vázquez", "Ramos", "Gil", "Ramírez", "Serrano", "Blanco", "Molina",
-                ].iter().map(|s| s.to_string()).collect(),
+                    "García",
+                    "Rodríguez",
+                    "González",
+                    "Fernández",
+                    "López",
+                    "Martínez",
+                    "Sánchez",
+                    "Pérez",
+                    "Gómez",
+                    "Martín",
+                    "Jiménez",
+                    "Ruiz",
+                    "Hernández",
+                    "Díaz",
+                    "Moreno",
+                    "Muñoz",
+                    "Álvarez",
+                    "Romero",
+                    "Alonso",
+                    "Gutiérrez",
+                    "Navarro",
+                    "Torres",
+                    "Domínguez",
+                    "Vázquez",
+                    "Ramos",
+                    "Gil",
+                    "Ramírez",
+                    "Serrano",
+                    "Blanco",
+                    "Molina",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 use_patronymic: false,
                 use_matronymic: false,
                 name_format: NameFormat::WesternStyle,
@@ -319,18 +531,31 @@ impl Ruleset {
                 include_death_dates: true,
             },
             locations: LocationRules {
-                countries: vec![
-                    Country {
-                        name: "Spain".to_string(),
-                        language: "Spanish".to_string(),
-                        cities: vec![
-                            "Madrid", "Barcelona", "Valencia", "Sevilla", "Zaragoza",
-                            "Málaga", "Murcia", "Palma", "Las Palmas", "Bilbao",
-                            "Alicante", "Córdoba", "Valladolid", "Vigo", "Granada",
-                        ].iter().map(|s| s.to_string()).collect(),
-                        probability_weight: 1.0,
-                    },
-                ],
+                countries: vec![Country {
+                    name: "Spain".to_string(),
+                    language: "Spanish".to_string(),
+                    cities: vec![
+                        "Madrid",
+                        "Barcelona",
+                        "Valencia",
+                        "Sevilla",
+                        "Zaragoza",
+                        "Málaga",
+                        "Murcia",
+                        "Palma",
+                        "Las Palmas",
+                        "Bilbao",
+                        "Alicante",
+                        "Córdoba",
+                        "Valladolid",
+                        "Vigo",
+                        "Granada",
+                    ]
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect(),
+                    probability_weight: 1.0,
+                }],
                 default_country: "Spain".to_string(),
             },
             demographics: DemographicRules {
@@ -368,23 +593,106 @@ impl Ruleset {
         Ruleset {
             names: NameRules {
                 male_given_names: vec![
-                    "Jean", "Pierre", "Michel", "André", "Philippe", "Alain", "Bernard", "Jacques",
-                    "Claude", "François", "René", "Louis", "Robert", "Christian", "Daniel",
-                    "Marc", "Paul", "Nicolas", "Julien", "Thomas", "Alexandre", "Maxime",
-                    "Antoine", "Laurent", "Olivier", "Guillaume", "Sébastien", "Christophe",
-                ].iter().map(|s| s.to_string()).collect(),
+                    "Jean",
+                    "Pierre",
+                    "Michel",
+                    "André",
+                    "Philippe",
+                    "Alain",
+                    "Bernard",
+                    "Jacques",
+                    "Claude",
+                    "François",
+                    "René",
+                    "Louis",
+                    "Robert",
+                    "Christian",
+                    "Daniel",
+                    "Marc",
+                    "Paul",
+                    "Nicolas",
+                    "Julien",
+                    "Thomas",
+                    "Alexandre",
+                    "Maxime",
+                    "Antoine",
+                    "Laurent",
+                    "Olivier",
+                    "Guillaume",
+                    "Sébastien",
+                    "Christophe",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 female_given_names: vec![
-                    "Marie", "Nathalie", "Isabelle", "Sylvie", "Catherine", "Françoise", "Anne",
-                    "Christine", "Monique", "Sophie", "Véronique", "Martine", "Nicole", "Valérie",
-                    "Brigitte", "Céline", "Sandrine", "Stéphanie", "Émilie", "Julie", "Chloé",
-                    "Camille", "Léa", "Emma", "Clara", "Louise", "Alice", "Manon",
-                ].iter().map(|s| s.to_string()).collect(),
+                    "Marie",
+                    "Nathalie",
+                    "Isabelle",
+                    "Sylvie",
+                    "Catherine",
+                    "Françoise",
+                    "Anne",
+                    "Christine",
+                    "Monique",
+                    "Sophie",
+                    "Véronique",
+                    "Martine",
+                    "Nicole",
+                    "Valérie",
+                    "Brigitte",
+                    "Céline",
+                    "Sandrine",
+                    "Stéphanie",
+                    "Émilie",
+                    "Julie",
+                    "Chloé",
+                    "Camille",
+                    "Léa",
+                    "Emma",
+                    "Clara",
+                    "Louise",
+                    "Alice",
+                    "Manon",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 surnames: vec![
-                    "Martin", "Bernard", "Dubois", "Thomas", "Robert", "Richard", "Petit", "Durand",
-                    "Leroy", "Moreau", "Simon", "Laurent", "Lefebvre", "Michel", "Garcia", "David",
-                    "Bertrand", "Roux", "Vincent", "Fournier", "Morel", "Girard", "André", "Lefevre",
-                    "Mercier", "Dupont", "Lambert", "Bonnet", "François", "Martinez",
-                ].iter().map(|s| s.to_string()).collect(),
+                    "Martin",
+                    "Bernard",
+                    "Dubois",
+                    "Thomas",
+                    "Robert",
+                    "Richard",
+                    "Petit",
+                    "Durand",
+                    "Leroy",
+                    "Moreau",
+                    "Simon",
+                    "Laurent",
+                    "Lefebvre",
+                    "Michel",
+                    "Garcia",
+                    "David",
+                    "Bertrand",
+                    "Roux",
+                    "Vincent",
+                    "Fournier",
+                    "Morel",
+                    "Girard",
+                    "André",
+                    "Lefevre",
+                    "Mercier",
+                    "Dupont",
+                    "Lambert",
+                    "Bonnet",
+                    "François",
+                    "Martinez",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 use_patronymic: false,
                 use_matronymic: false,
                 name_format: NameFormat::WesternStyle,
@@ -401,18 +709,32 @@ impl Ruleset {
                 include_death_dates: true,
             },
             locations: LocationRules {
-                countries: vec![
-                    Country {
-                        name: "France".to_string(),
-                        language: "French".to_string(),
-                        cities: vec![
-                            "Paris", "Marseille", "Lyon", "Toulouse", "Nice", "Nantes",
-                            "Strasbourg", "Montpellier", "Bordeaux", "Lille", "Rennes",
-                            "Reims", "Le Havre", "Saint-Étienne", "Toulon", "Grenoble",
-                        ].iter().map(|s| s.to_string()).collect(),
-                        probability_weight: 1.0,
-                    },
-                ],
+                countries: vec![Country {
+                    name: "France".to_string(),
+                    language: "French".to_string(),
+                    cities: vec![
+                        "Paris",
+                        "Marseille",
+                        "Lyon",
+                        "Toulouse",
+                        "Nice",
+                        "Nantes",
+                        "Strasbourg",
+                        "Montpellier",
+                        "Bordeaux",
+                        "Lille",
+                        "Rennes",
+                        "Reims",
+                        "Le Havre",
+                        "Saint-Étienne",
+                        "Toulon",
+                        "Grenoble",
+                    ]
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect(),
+                    probability_weight: 1.0,
+                }],
                 default_country: "France".to_string(),
             },
             demographics: DemographicRules {
@@ -450,23 +772,81 @@ impl Ruleset {
         Ruleset {
             names: NameRules {
                 male_given_names: vec![
-                    "Giuseppe", "Giovanni", "Antonio", "Mario", "Francesco", "Luigi", "Angelo",
-                    "Vincenzo", "Pietro", "Salvatore", "Carlo", "Franco", "Domenico", "Bruno",
-                    "Paolo", "Michele", "Giorgio", "Marco", "Andrea", "Stefano", "Alessandro",
-                    "Roberto", "Matteo", "Lorenzo", "Riccardo", "Davide", "Simone", "Luca",
-                ].iter().map(|s| s.to_string()).collect(),
+                    "Giuseppe",
+                    "Giovanni",
+                    "Antonio",
+                    "Mario",
+                    "Francesco",
+                    "Luigi",
+                    "Angelo",
+                    "Vincenzo",
+                    "Pietro",
+                    "Salvatore",
+                    "Carlo",
+                    "Franco",
+                    "Domenico",
+                    "Bruno",
+                    "Paolo",
+                    "Michele",
+                    "Giorgio",
+                    "Marco",
+                    "Andrea",
+                    "Stefano",
+                    "Alessandro",
+                    "Roberto",
+                    "Matteo",
+                    "Lorenzo",
+                    "Riccardo",
+                    "Davide",
+                    "Simone",
+                    "Luca",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 female_given_names: vec![
-                    "Maria", "Anna", "Giuseppina", "Rosa", "Angela", "Giovanna", "Teresa",
-                    "Lucia", "Carmela", "Caterina", "Francesca", "Rita", "Antonia", "Paola",
-                    "Laura", "Alessandra", "Giulia", "Chiara", "Sara", "Martina", "Federica",
-                    "Valentina", "Elena", "Silvia", "Elisa", "Sofia", "Beatrice", "Giorgia",
-                ].iter().map(|s| s.to_string()).collect(),
+                    "Maria",
+                    "Anna",
+                    "Giuseppina",
+                    "Rosa",
+                    "Angela",
+                    "Giovanna",
+                    "Teresa",
+                    "Lucia",
+                    "Carmela",
+                    "Caterina",
+                    "Francesca",
+                    "Rita",
+                    "Antonia",
+                    "Paola",
+                    "Laura",
+                    "Alessandra",
+                    "Giulia",
+                    "Chiara",
+                    "Sara",
+                    "Martina",
+                    "Federica",
+                    "Valentina",
+                    "Elena",
+                    "Silvia",
+                    "Elisa",
+                    "Sofia",
+                    "Beatrice",
+                    "Giorgia",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 surnames: vec![
-                    "Rossi", "Russo", "Ferrari", "Esposito", "Bianchi", "Romano", "Colombo", "Ricci",
-                    "Marino", "Greco", "Bruno", "Gallo", "Conti", "De Luca", "Mancini", "Costa",
-                    "Giordano", "Rizzo", "Lombardi", "Moretti", "Barbieri", "Fontana", "Santoro",
-                    "Mariani", "Rinaldi", "Caruso", "Ferrara", "Galli", "Martini", "Leone",
-                ].iter().map(|s| s.to_string()).collect(),
+                    "Rossi", "Russo", "Ferrari", "Esposito", "Bianchi", "Romano", "Colombo",
+                    "Ricci", "Marino", "Greco", "Bruno", "Gallo", "Conti", "De Luca", "Mancini",
+                    "Costa", "Giordano", "Rizzo", "Lombardi", "Moretti", "Barbieri", "Fontana",
+                    "Santoro", "Mariani", "Rinaldi", "Caruso", "Ferrara", "Galli", "Martini",
+                    "Leone",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 use_patronymic: false,
                 use_matronymic: false,
                 name_format: NameFormat::WesternStyle,
@@ -483,18 +863,19 @@ impl Ruleset {
                 include_death_dates: true,
             },
             locations: LocationRules {
-                countries: vec![
-                    Country {
-                        name: "Italy".to_string(),
-                        language: "Italian".to_string(),
-                        cities: vec![
-                            "Roma", "Milano", "Napoli", "Torino", "Palermo", "Genova",
-                            "Bologna", "Firenze", "Bari", "Catania", "Venezia", "Verona",
-                            "Messina", "Padova", "Trieste", "Brescia",
-                        ].iter().map(|s| s.to_string()).collect(),
-                        probability_weight: 1.0,
-                    },
-                ],
+                countries: vec![Country {
+                    name: "Italy".to_string(),
+                    language: "Italian".to_string(),
+                    cities: vec![
+                        "Roma", "Milano", "Napoli", "Torino", "Palermo", "Genova", "Bologna",
+                        "Firenze", "Bari", "Catania", "Venezia", "Verona", "Messina", "Padova",
+                        "Trieste", "Brescia",
+                    ]
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect(),
+                    probability_weight: 1.0,
+                }],
                 default_country: "Italy".to_string(),
             },
             demographics: DemographicRules {
@@ -535,7 +916,7 @@ mod tests {
     #[test]
     fn test_default_english_ruleset() {
         let ruleset = Ruleset::default_english();
-        
+
         assert!(!ruleset.names.male_given_names.is_empty());
         assert!(!ruleset.names.female_given_names.is_empty());
         assert!(!ruleset.names.surnames.is_empty());
@@ -548,7 +929,7 @@ mod tests {
     #[test]
     fn test_default_lds_ruleset() {
         let ruleset = Ruleset::default_lds();
-        
+
         assert!(ruleset.ordinances.include_lds_ordinances);
         assert!(ruleset.ordinances.baptism_probability > 0.0);
         assert!(ruleset.ordinances.endowment_probability > 0.0);
@@ -559,21 +940,27 @@ mod tests {
     #[test]
     fn test_default_icelandic_ruleset() {
         let ruleset = Ruleset::default_icelandic();
-        
+
         assert!(ruleset.names.use_patronymic);
         assert!(ruleset.names.use_matronymic);
         assert!(ruleset.names.surnames.is_empty());
         assert_eq!(ruleset.locations.default_country, "Iceland");
         assert_eq!(ruleset.demographics.languages[0], "Icelandic");
-        assert!(matches!(ruleset.names.name_format, NameFormat::IcelandicStyle));
+        assert!(matches!(
+            ruleset.names.name_format,
+            NameFormat::IcelandicStyle
+        ));
     }
 
     #[test]
     fn test_default_spanish_ruleset() {
         let ruleset = Ruleset::default_spanish();
-        
+
         assert!(ruleset.names.male_given_names.contains(&"José".to_string()));
-        assert!(ruleset.names.female_given_names.contains(&"María".to_string()));
+        assert!(ruleset
+            .names
+            .female_given_names
+            .contains(&"María".to_string()));
         assert!(ruleset.names.surnames.contains(&"García".to_string()));
         assert_eq!(ruleset.locations.default_country, "Spain");
         assert_eq!(ruleset.demographics.languages[0], "Spanish");
@@ -582,9 +969,12 @@ mod tests {
     #[test]
     fn test_default_french_ruleset() {
         let ruleset = Ruleset::default_french();
-        
+
         assert!(ruleset.names.male_given_names.contains(&"Jean".to_string()));
-        assert!(ruleset.names.female_given_names.contains(&"Marie".to_string()));
+        assert!(ruleset
+            .names
+            .female_given_names
+            .contains(&"Marie".to_string()));
         assert_eq!(ruleset.locations.default_country, "France");
         assert_eq!(ruleset.demographics.languages[0], "French");
     }
@@ -592,9 +982,15 @@ mod tests {
     #[test]
     fn test_default_italian_ruleset() {
         let ruleset = Ruleset::default_italian();
-        
-        assert!(ruleset.names.male_given_names.contains(&"Giuseppe".to_string()));
-        assert!(ruleset.names.female_given_names.contains(&"Maria".to_string()));
+
+        assert!(ruleset
+            .names
+            .male_given_names
+            .contains(&"Giuseppe".to_string()));
+        assert!(ruleset
+            .names
+            .female_given_names
+            .contains(&"Maria".to_string()));
         assert!(ruleset.names.surnames.contains(&"Rossi".to_string()));
         assert_eq!(ruleset.locations.default_country, "Italy");
         assert_eq!(ruleset.demographics.languages[0], "Italian");
@@ -603,7 +999,7 @@ mod tests {
     #[test]
     fn test_date_rules_validity() {
         let ruleset = Ruleset::default_english();
-        
+
         assert!(ruleset.dates.birth_year_start < ruleset.dates.birth_year_end);
         assert!(ruleset.dates.min_marriage_age < ruleset.dates.max_marriage_age);
         assert!(ruleset.dates.min_parent_age < ruleset.dates.max_parent_age);
@@ -614,7 +1010,7 @@ mod tests {
     #[test]
     fn test_demographic_probabilities() {
         let ruleset = Ruleset::default_english();
-        
+
         assert!(ruleset.demographics.sex_ratio >= 0.0);
         assert!(ruleset.demographics.sex_ratio <= 1.0);
         assert!(ruleset.demographics.twin_rate >= 0.0);
@@ -626,7 +1022,7 @@ mod tests {
     #[test]
     fn test_relationship_probabilities() {
         let ruleset = Ruleset::default_english();
-        
+
         assert!(ruleset.relationships.marriage_probability >= 0.0);
         assert!(ruleset.relationships.marriage_probability <= 1.0);
         assert!(ruleset.relationships.divorce_probability >= 0.0);
@@ -640,7 +1036,7 @@ mod tests {
     fn test_ruleset_serialization() {
         let ruleset = Ruleset::default_english();
         let json = serde_json::to_string(&ruleset).unwrap();
-        
+
         assert!(!json.is_empty());
         assert!(json.contains("\"male_given_names\""));
         assert!(json.contains("\"surnames\""));
@@ -651,9 +1047,15 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let json = serde_json::to_string(&ruleset).unwrap();
         let deserialized: Ruleset = serde_json::from_str(&json).unwrap();
-        
-        assert_eq!(ruleset.names.male_given_names.len(), deserialized.names.male_given_names.len());
-        assert_eq!(ruleset.locations.default_country, deserialized.locations.default_country);
+
+        assert_eq!(
+            ruleset.names.male_given_names.len(),
+            deserialized.names.male_given_names.len()
+        );
+        assert_eq!(
+            ruleset.locations.default_country,
+            deserialized.locations.default_country
+        );
     }
 
     #[test]
@@ -668,8 +1070,14 @@ mod tests {
         ];
 
         for ruleset in rulesets {
-            assert!(!ruleset.names.male_given_names.is_empty(), "Male names should not be empty");
-            assert!(!ruleset.names.female_given_names.is_empty(), "Female names should not be empty");
+            assert!(
+                !ruleset.names.male_given_names.is_empty(),
+                "Male names should not be empty"
+            );
+            assert!(
+                !ruleset.names.female_given_names.is_empty(),
+                "Female names should not be empty"
+            );
         }
     }
 
@@ -684,8 +1092,14 @@ mod tests {
         ];
 
         for ruleset in rulesets {
-            assert!(!ruleset.locations.countries.is_empty(), "Countries should not be empty");
-            assert!(!ruleset.locations.default_country.is_empty(), "Default country should not be empty");
+            assert!(
+                !ruleset.locations.countries.is_empty(),
+                "Countries should not be empty"
+            );
+            assert!(
+                !ruleset.locations.default_country.is_empty(),
+                "Default country should not be empty"
+            );
         }
     }
 }

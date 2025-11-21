@@ -71,16 +71,18 @@ impl GedcomGenerator {
 
     fn generate_families(&mut self, target_count: usize, rng: &mut impl Rng) {
         // Generate founding generation
-        let founding_couples = (target_count as f64 / 
-            (self.ruleset.relationships.generations as f64 * 3.0)).ceil() as usize;
-        
+        let founding_couples = (target_count as f64
+            / (self.ruleset.relationships.generations as f64 * 3.0))
+            .ceil() as usize;
+
         for _ in 0..founding_couples {
             self.create_family(None, rng);
         }
 
         // Generate subsequent generations
         for _gen in 1..self.ruleset.relationships.generations {
-            let current_individuals: Vec<usize> = self.individuals
+            let current_individuals: Vec<usize> = self
+                .individuals
                 .iter()
                 .filter(|i| i.parent_family_id.is_some())
                 .map(|i| i.id)
@@ -91,11 +93,17 @@ impl GedcomGenerator {
                     return;
                 }
 
-                let person = self.individuals.iter().find(|i| i.id == person_id).unwrap().clone();
+                let person = self
+                    .individuals
+                    .iter()
+                    .find(|i| i.id == person_id)
+                    .unwrap()
+                    .clone();
                 let age = 2024 - person.birth_date.year();
-                
-                if age >= self.ruleset.dates.min_marriage_age 
-                    && rng.gen_bool(self.ruleset.relationships.marriage_probability) {
+
+                if age >= self.ruleset.dates.min_marriage_age
+                    && rng.gen_bool(self.ruleset.relationships.marriage_probability)
+                {
                     self.create_family(Some(person_id), rng);
                 }
             }
@@ -107,7 +115,12 @@ impl GedcomGenerator {
         self.next_fam_id += 1;
 
         let (husband, wife) = if let Some(pid) = person_id {
-            let person = self.individuals.iter().find(|i| i.id == pid).unwrap().clone();
+            let person = self
+                .individuals
+                .iter()
+                .find(|i| i.id == pid)
+                .unwrap()
+                .clone();
             match person.sex {
                 Sex::Male => {
                     let wife = self.create_spouse(&person, rng);
@@ -126,12 +139,17 @@ impl GedcomGenerator {
             let husband = self.create_individual(None, None, rng);
             let husband_id = husband.id;
             self.individuals.push(husband);
-            
-            let husband_ref = self.individuals.iter().find(|i| i.id == husband_id).unwrap().clone();
+
+            let husband_ref = self
+                .individuals
+                .iter()
+                .find(|i| i.id == husband_id)
+                .unwrap()
+                .clone();
             let wife = self.create_spouse(&husband_ref, rng);
             let wife_id = wife.id;
             self.individuals.push(wife);
-            
+
             (husband_id, wife_id)
         };
 
@@ -143,9 +161,19 @@ impl GedcomGenerator {
             w.spouse_family_ids.push(family_id);
         }
 
-        let husband_birth = self.individuals.iter().find(|i| i.id == husband).unwrap().birth_date;
-        let wife_birth = self.individuals.iter().find(|i| i.id == wife).unwrap().birth_date;
-        
+        let husband_birth = self
+            .individuals
+            .iter()
+            .find(|i| i.id == husband)
+            .unwrap()
+            .birth_date;
+        let wife_birth = self
+            .individuals
+            .iter()
+            .find(|i| i.id == wife)
+            .unwrap()
+            .birth_date;
+
         let marriage_date = self.generate_marriage_date(husband_birth, wife_birth, rng);
         let marriage_place = self.select_location(rng);
 
@@ -156,7 +184,7 @@ impl GedcomGenerator {
         for _ in 0..num_children {
             let child = self.create_individual(Some(husband), Some(wife), rng);
             children_ids.push(child.id);
-            
+
             let mut child_mut = child.clone();
             child_mut.parent_family_id = Some(family_id);
             self.individuals.push(child_mut);
@@ -182,7 +210,12 @@ impl GedcomGenerator {
         family_id
     }
 
-    fn create_individual(&mut self, father_id: Option<usize>, mother_id: Option<usize>, rng: &mut impl Rng) -> Individual {
+    fn create_individual(
+        &mut self,
+        father_id: Option<usize>,
+        mother_id: Option<usize>,
+        rng: &mut impl Rng,
+    ) -> Individual {
         let id = self.next_indi_id;
         self.next_indi_id += 1;
 
@@ -263,7 +296,13 @@ impl GedcomGenerator {
         names[rng.gen_range(0..names.len())].clone()
     }
 
-    fn select_surname(&self, father_id: Option<usize>, _mother_id: Option<usize>, _sex: &Sex, rng: &mut impl Rng) -> String {
+    fn select_surname(
+        &self,
+        father_id: Option<usize>,
+        _mother_id: Option<usize>,
+        _sex: &Sex,
+        rng: &mut impl Rng,
+    ) -> String {
         if self.ruleset.names.use_patronymic {
             if let Some(fid) = father_id {
                 let father = self.individuals.iter().find(|i| i.id == fid).unwrap();
@@ -292,38 +331,49 @@ impl GedcomGenerator {
         if self.ruleset.demographics.languages.is_empty() {
             "English".to_string()
         } else {
-            self.ruleset.demographics.languages[rng.gen_range(0..self.ruleset.demographics.languages.len())].clone()
+            self.ruleset.demographics.languages
+                [rng.gen_range(0..self.ruleset.demographics.languages.len())]
+            .clone()
         }
     }
 
-    fn generate_birth_date(&self, father_id: Option<usize>, _mother_id: Option<usize>, rng: &mut impl Rng) -> NaiveDate {
+    fn generate_birth_date(
+        &self,
+        father_id: Option<usize>,
+        _mother_id: Option<usize>,
+        rng: &mut impl Rng,
+    ) -> NaiveDate {
         if let Some(fid) = father_id {
             if let Some(father) = self.individuals.iter().find(|i| i.id == fid) {
-                let parent_age = rng.gen_range(self.ruleset.dates.min_parent_age..self.ruleset.dates.max_parent_age);
+                let parent_age = rng.gen_range(
+                    self.ruleset.dates.min_parent_age..self.ruleset.dates.max_parent_age,
+                );
                 return father.birth_date + chrono::Duration::days(parent_age as i64 * 365);
             }
         }
 
-        let year = rng.gen_range(self.ruleset.dates.birth_year_start..=self.ruleset.dates.birth_year_end);
+        let year =
+            rng.gen_range(self.ruleset.dates.birth_year_start..=self.ruleset.dates.birth_year_end);
         let month = rng.gen_range(1..=12);
         let day = rng.gen_range(1..=28);
         NaiveDate::from_ymd_opt(year, month, day).unwrap()
     }
 
     fn generate_death_date(&self, birth_date: NaiveDate, rng: &mut impl Rng) -> Option<NaiveDate> {
-        use rand_distr::{Normal, Distribution};
-        
+        use rand_distr::{Distribution, Normal};
+
         let normal = Normal::new(
             self.ruleset.dates.life_expectancy_mean as f64,
-            self.ruleset.dates.life_expectancy_stddev as f64
-        ).ok()?;
-        
+            self.ruleset.dates.life_expectancy_stddev as f64,
+        )
+        .ok()?;
+
         let lifespan_years = normal.sample(rng).max(0.0);
         let lifespan = lifespan_years as i64;
         let current_year = chrono::Utc::now().year();
-        let max_death_year = current_year - 110;  // Deaths must be at least 110 years ago
+        let max_death_year = current_year - 110; // Deaths must be at least 110 years ago
         let death_year = birth_date.year() + lifespan as i32;
-        
+
         if death_year > max_death_year {
             None
         } else {
@@ -331,9 +381,19 @@ impl GedcomGenerator {
         }
     }
 
-    fn generate_marriage_date(&self, husband_birth: NaiveDate, wife_birth: NaiveDate, rng: &mut impl Rng) -> NaiveDate {
-        let later_birth = if husband_birth > wife_birth { husband_birth } else { wife_birth };
-        let marriage_age = rng.gen_range(self.ruleset.dates.min_marriage_age..=self.ruleset.dates.max_marriage_age);
+    fn generate_marriage_date(
+        &self,
+        husband_birth: NaiveDate,
+        wife_birth: NaiveDate,
+        rng: &mut impl Rng,
+    ) -> NaiveDate {
+        let later_birth = if husband_birth > wife_birth {
+            husband_birth
+        } else {
+            wife_birth
+        };
+        let marriage_age = rng
+            .gen_range(self.ruleset.dates.min_marriage_age..=self.ruleset.dates.max_marriage_age);
         later_birth + chrono::Duration::days(marriage_age as i64 * 365)
     }
 
@@ -343,23 +403,24 @@ impl GedcomGenerator {
     }
 
     fn calculate_num_children(&self, rng: &mut impl Rng) -> usize {
-        use rand_distr::{Normal, Distribution};
-        
+        use rand_distr::{Distribution, Normal};
+
         let normal = Normal::new(
             self.ruleset.relationships.children_mean,
-            self.ruleset.relationships.children_stddev
-        ).unwrap();
-        
+            self.ruleset.relationships.children_stddev,
+        )
+        .unwrap();
+
         let num = normal.sample(rng).round() as i32;
         num.clamp(
             self.ruleset.relationships.min_children as i32,
-            self.ruleset.relationships.max_children as i32
+            self.ruleset.relationships.max_children as i32,
         ) as usize
     }
 
     pub fn write_gedcom<W: Write>(&self, writer: &mut BufWriter<W>) -> std::io::Result<()> {
         self.write_header(writer)?;
-        
+
         for individual in &self.individuals {
             self.write_individual(writer, individual)?;
         }
@@ -383,16 +444,28 @@ impl GedcomGenerator {
         writeln!(writer, "1 GEDC")?;
         writeln!(writer, "2 VERS 5.5.1")?;
         writeln!(writer, "2 FORM LINEAGE-LINKED")?;
-        writeln!(writer, "1 LANG {}", self.ruleset.demographics.languages.first().unwrap_or(&"English".to_string()))?;
+        writeln!(
+            writer,
+            "1 LANG {}",
+            self.ruleset
+                .demographics
+                .languages
+                .first()
+                .unwrap_or(&"English".to_string())
+        )?;
         Ok(())
     }
 
-    fn write_individual<W: Write>(&self, writer: &mut BufWriter<W>, indi: &Individual) -> std::io::Result<()> {
+    fn write_individual<W: Write>(
+        &self,
+        writer: &mut BufWriter<W>,
+        indi: &Individual,
+    ) -> std::io::Result<()> {
         writeln!(writer, "0 @I{}@ INDI", indi.id)?;
         writeln!(writer, "1 NAME {} /{}/", indi.given_name, indi.surname)?;
         writeln!(writer, "2 GIVN {}", indi.given_name)?;
         writeln!(writer, "2 SURN {}", indi.surname)?;
-        
+
         match indi.sex {
             Sex::Male => writeln!(writer, "1 SEX M")?,
             Sex::Female => writeln!(writer, "1 SEX F")?,
@@ -422,7 +495,7 @@ impl GedcomGenerator {
         if self.ruleset.ordinances.include_lds_ordinances {
             use rand::thread_rng;
             let mut rng = thread_rng();
-            
+
             if rng.gen_bool(self.ruleset.ordinances.baptism_probability) {
                 self.write_baptism(writer, indi, &mut rng)?;
             }
@@ -434,9 +507,15 @@ impl GedcomGenerator {
         Ok(())
     }
 
-    fn write_baptism<W: Write>(&self, writer: &mut BufWriter<W>, indi: &Individual, rng: &mut impl Rng) -> std::io::Result<()> {
+    fn write_baptism<W: Write>(
+        &self,
+        writer: &mut BufWriter<W>,
+        indi: &Individual,
+        rng: &mut impl Rng,
+    ) -> std::io::Result<()> {
         let bapt_date = indi.birth_date + chrono::Duration::days(8 * 365); // Age 8
-        let temple = &self.ruleset.ordinances.temples[rng.gen_range(0..self.ruleset.ordinances.temples.len())];
+        let temple = &self.ruleset.ordinances.temples
+            [rng.gen_range(0..self.ruleset.ordinances.temples.len())];
         writeln!(writer, "1 BAPL")?;
         writeln!(writer, "2 DATE {}", format_date(bapt_date))?;
         writeln!(writer, "2 TEMP {}", temple)?;
@@ -444,9 +523,15 @@ impl GedcomGenerator {
         Ok(())
     }
 
-    fn write_endowment<W: Write>(&self, writer: &mut BufWriter<W>, indi: &Individual, rng: &mut impl Rng) -> std::io::Result<()> {
+    fn write_endowment<W: Write>(
+        &self,
+        writer: &mut BufWriter<W>,
+        indi: &Individual,
+        rng: &mut impl Rng,
+    ) -> std::io::Result<()> {
         let endow_date = indi.birth_date + chrono::Duration::days(19 * 365); // Age 19
-        let temple = &self.ruleset.ordinances.temples[rng.gen_range(0..self.ruleset.ordinances.temples.len())];
+        let temple = &self.ruleset.ordinances.temples
+            [rng.gen_range(0..self.ruleset.ordinances.temples.len())];
         writeln!(writer, "1 ENDL")?;
         writeln!(writer, "2 DATE {}", format_date(endow_date))?;
         writeln!(writer, "2 TEMP {}", temple)?;
@@ -454,9 +539,13 @@ impl GedcomGenerator {
         Ok(())
     }
 
-    fn write_family<W: Write>(&self, writer: &mut BufWriter<W>, fam: &Family) -> std::io::Result<()> {
+    fn write_family<W: Write>(
+        &self,
+        writer: &mut BufWriter<W>,
+        fam: &Family,
+    ) -> std::io::Result<()> {
         writeln!(writer, "0 @F{}@ FAM", fam.id)?;
-        
+
         if let Some(husband_id) = fam.husband_id {
             writeln!(writer, "1 HUSB @I{}@", husband_id)?;
         }
@@ -491,18 +580,28 @@ impl GedcomGenerator {
 }
 
 fn format_date(date: NaiveDate) -> String {
-    format!("{} {} {}", 
-        date.day(), 
-        month_name(date.month()), 
+    format!(
+        "{} {} {}",
+        date.day(),
+        month_name(date.month()),
         date.year()
     )
 }
 
 fn month_name(month: u32) -> &'static str {
     match month {
-        1 => "JAN", 2 => "FEB", 3 => "MAR", 4 => "APR",
-        5 => "MAY", 6 => "JUN", 7 => "JUL", 8 => "AUG",
-        9 => "SEP", 10 => "OCT", 11 => "NOV", 12 => "DEC",
+        1 => "JAN",
+        2 => "FEB",
+        3 => "MAR",
+        4 => "APR",
+        5 => "MAY",
+        6 => "JUN",
+        7 => "JUL",
+        8 => "AUG",
+        9 => "SEP",
+        10 => "OCT",
+        11 => "NOV",
+        12 => "DEC",
         _ => "JAN",
     }
 }
@@ -516,7 +615,7 @@ mod tests {
     fn test_generator_creation() {
         let ruleset = Ruleset::default_english();
         let generator = GedcomGenerator::new(ruleset);
-        
+
         assert_eq!(generator.individuals.len(), 0);
         assert_eq!(generator.families.len(), 0);
         assert_eq!(generator.next_indi_id, 1);
@@ -529,9 +628,9 @@ mod tests {
         ruleset.relationships.generate_families = false; // Disable families to test exact count
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(10, &mut rng);
-        
+
         assert_eq!(generator.individuals.len(), 10);
     }
 
@@ -540,9 +639,9 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(5, &mut rng);
-        
+
         for individual in &generator.individuals {
             assert!(!individual.given_name.is_empty());
             assert!(!individual.surname.is_empty());
@@ -556,12 +655,20 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(100, &mut rng);
-        
-        let males = generator.individuals.iter().filter(|i| matches!(i.sex, Sex::Male)).count();
-        let females = generator.individuals.iter().filter(|i| matches!(i.sex, Sex::Female)).count();
-        
+
+        let males = generator
+            .individuals
+            .iter()
+            .filter(|i| matches!(i.sex, Sex::Male))
+            .count();
+        let females = generator
+            .individuals
+            .iter()
+            .filter(|i| matches!(i.sex, Sex::Female))
+            .count();
+
         assert!(males > 0);
         assert!(females > 0);
         assert_eq!(males + females, generator.individuals.len());
@@ -572,16 +679,20 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(100, &mut rng);
-        
+
         let current_year = chrono::Utc::now().year();
         let max_death_year = current_year - 110;
-        
+
         for individual in &generator.individuals {
             if let Some(death_date) = individual.death_date {
-                assert!(death_date.year() <= max_death_year, 
-                    "Death date {} should be before {}", death_date.year(), max_death_year);
+                assert!(
+                    death_date.year() <= max_death_year,
+                    "Death date {} should be before {}",
+                    death_date.year(),
+                    max_death_year
+                );
             }
         }
     }
@@ -594,9 +705,9 @@ mod tests {
         ruleset.relationships.generate_families = false; // Disable families to test initial generation only
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(50, &mut rng);
-        
+
         for individual in &generator.individuals {
             assert!(individual.birth_date.year() >= birth_year_start);
             assert!(individual.birth_date.year() <= birth_year_end);
@@ -609,9 +720,9 @@ mod tests {
         ruleset.relationships.generate_families = true;
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(20, &mut rng);
-        
+
         // Should have created some families
         assert!(generator.families.len() > 0);
     }
@@ -622,9 +733,9 @@ mod tests {
         ruleset.relationships.generate_families = true;
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(20, &mut rng);
-        
+
         for family in &generator.families {
             // Most families should have both parents
             assert!(family.husband_id.is_some() || family.wife_id.is_some());
@@ -635,7 +746,7 @@ mod tests {
     fn test_format_date() {
         let date = NaiveDate::from_ymd_opt(2024, 3, 15).unwrap();
         let formatted = format_date(date);
-        
+
         assert_eq!(formatted, "15 MAR 2024");
     }
 
@@ -651,24 +762,24 @@ mod tests {
     #[test]
     fn test_gedcom_output_format() {
         use std::io::Cursor;
-        
+
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(5, &mut rng);
-        
+
         let mut buffer = Vec::new();
         {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = BufWriter::new(cursor);
-            
+
             generator.write_gedcom(&mut writer).unwrap();
             writer.flush().unwrap();
         }
-        
+
         let output = String::from_utf8(buffer).unwrap();
-        
+
         // Check GEDCOM structure
         assert!(output.contains("0 HEAD"));
         assert!(output.contains("1 SOUR Rfamily"));
@@ -681,39 +792,39 @@ mod tests {
         let ruleset = Ruleset::default_spanish();
         let mut generator = GedcomGenerator::new(ruleset.clone());
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(10, &mut rng);
-        
+
         // Check that generated individuals use Spanish names
         let has_spanish_name = generator.individuals.iter().any(|i| {
-            ruleset.names.male_given_names.contains(&i.given_name) ||
-            ruleset.names.female_given_names.contains(&i.given_name)
+            ruleset.names.male_given_names.contains(&i.given_name)
+                || ruleset.names.female_given_names.contains(&i.given_name)
         });
-        
+
         assert!(has_spanish_name);
     }
 
     #[test]
     fn test_lds_ordinances_when_enabled() {
         use std::io::Cursor;
-        
+
         let ruleset = Ruleset::default_lds();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(10, &mut rng);
-        
+
         let mut buffer = Vec::new();
         {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = BufWriter::new(cursor);
-            
+
             generator.write_gedcom(&mut writer).unwrap();
             writer.flush().unwrap();
         }
-        
+
         let output = String::from_utf8(buffer).unwrap();
-        
+
         // Should contain LDS ordinance tags
         assert!(output.contains("BAPL") || output.contains("ENDL"));
     }
@@ -721,24 +832,24 @@ mod tests {
     #[test]
     fn test_no_lds_ordinances_when_disabled() {
         use std::io::Cursor;
-        
+
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(10, &mut rng);
-        
+
         let mut buffer = Vec::new();
         {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = BufWriter::new(cursor);
-            
+
             generator.write_gedcom(&mut writer).unwrap();
             writer.flush().unwrap();
         }
-        
+
         let output = String::from_utf8(buffer).unwrap();
-        
+
         // Should NOT contain LDS ordinance tags
         assert!(!output.contains("BAPL"));
         assert!(!output.contains("ENDL"));
@@ -749,11 +860,14 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let generator = GedcomGenerator::new(ruleset.clone());
         let mut rng = rand::thread_rng();
-        
+
         let name = generator.select_given_name(&Sex::Male, &mut rng);
-        
-        assert!(ruleset.names.male_given_names.contains(&name),
-                "Generated male name '{}' should be in male names list", name);
+
+        assert!(
+            ruleset.names.male_given_names.contains(&name),
+            "Generated male name '{}' should be in male names list",
+            name
+        );
     }
 
     #[test]
@@ -761,11 +875,14 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let generator = GedcomGenerator::new(ruleset.clone());
         let mut rng = rand::thread_rng();
-        
+
         let name = generator.select_given_name(&Sex::Female, &mut rng);
-        
-        assert!(ruleset.names.female_given_names.contains(&name),
-                "Generated female name '{}' should be in female names list", name);
+
+        assert!(
+            ruleset.names.female_given_names.contains(&name),
+            "Generated female name '{}' should be in female names list",
+            name
+        );
     }
 
     #[test]
@@ -773,11 +890,14 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let generator = GedcomGenerator::new(ruleset.clone());
         let mut rng = rand::thread_rng();
-        
+
         let surname = generator.select_surname(None, None, &Sex::Male, &mut rng);
-        
-        assert!(ruleset.names.surnames.contains(&surname),
-                "Generated surname '{}' should be in surnames list", surname);
+
+        assert!(
+            ruleset.names.surnames.contains(&surname),
+            "Generated surname '{}' should be in surnames list",
+            surname
+        );
     }
 
     #[test]
@@ -786,19 +906,22 @@ mod tests {
         let ruleset = Ruleset::default_icelandic();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         // Create a father
         let father = generator.create_individual(None, None, &mut rng);
         let father_given_name = father.given_name.clone();
         let father_id = father.id;
         generator.individuals.push(father);
-        
+
         // Create child with father (using patronymic system)
         let surname = generator.select_surname(Some(father_id), None, &Sex::Male, &mut rng);
-        
+
         // Should be patronymic (father's given name + "son")
-        assert_eq!(surname, format!("{}son", father_given_name),
-                  "Child should inherit patronymic from father");
+        assert_eq!(
+            surname,
+            format!("{}son", father_given_name),
+            "Child should inherit patronymic from father"
+        );
     }
 
     #[test]
@@ -806,15 +929,21 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let generator = GedcomGenerator::new(ruleset.clone());
         let mut rng = rand::thread_rng();
-        
+
         let location = generator.select_location(&mut rng);
-        
+
         // Location should be from one of the countries
-        let found = ruleset.locations.countries.iter().any(|country| {
-            country.cities.iter().any(|city| location.contains(city))
-        });
-        
-        assert!(found, "Location '{}' should be from configured countries", location);
+        let found = ruleset
+            .locations
+            .countries
+            .iter()
+            .any(|country| country.cities.iter().any(|city| location.contains(city)));
+
+        assert!(
+            found,
+            "Location '{}' should be from configured countries",
+            location
+        );
     }
 
     #[test]
@@ -822,11 +951,14 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let generator = GedcomGenerator::new(ruleset.clone());
         let mut rng = rand::thread_rng();
-        
+
         let language = generator.select_language(&mut rng);
-        
-        assert!(ruleset.demographics.languages.contains(&language),
-                "Language '{}' should be in languages list", language);
+
+        assert!(
+            ruleset.demographics.languages.contains(&language),
+            "Language '{}' should be in languages list",
+            language
+        );
     }
 
     #[test]
@@ -834,13 +966,21 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let generator = GedcomGenerator::new(ruleset.clone());
         let mut rng = rand::thread_rng();
-        
+
         let birth_date = generator.generate_birth_date(None, None, &mut rng);
-        
-        assert!(birth_date.year() >= ruleset.dates.birth_year_start,
-                "Birth year {} should be >= {}", birth_date.year(), ruleset.dates.birth_year_start);
-        assert!(birth_date.year() <= ruleset.dates.birth_year_end,
-                "Birth year {} should be <= {}", birth_date.year(), ruleset.dates.birth_year_end);
+
+        assert!(
+            birth_date.year() >= ruleset.dates.birth_year_start,
+            "Birth year {} should be >= {}",
+            birth_date.year(),
+            ruleset.dates.birth_year_start
+        );
+        assert!(
+            birth_date.year() <= ruleset.dates.birth_year_end,
+            "Birth year {} should be <= {}",
+            birth_date.year(),
+            ruleset.dates.birth_year_end
+        );
     }
 
     #[test]
@@ -848,18 +988,21 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset.clone());
         let mut rng = rand::thread_rng();
-        
+
         // Create a parent
         let parent = generator.create_individual(None, None, &mut rng);
         let parent_birth = parent.birth_date;
         let parent_id = parent.id;
         generator.individuals.push(parent);
-        
+
         // Generate child birth date
         let child_birth = generator.generate_birth_date(Some(parent_id), None, &mut rng);
-        
-        assert!(child_birth.year() >= parent_birth.year() + ruleset.dates.min_parent_age,
-                "Child birth year should be at least {} years after parent", ruleset.dates.min_parent_age);
+
+        assert!(
+            child_birth.year() >= parent_birth.year() + ruleset.dates.min_parent_age,
+            "Child birth year should be at least {} years after parent",
+            ruleset.dates.min_parent_age
+        );
     }
 
     #[test]
@@ -867,11 +1010,14 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         let birth_date = NaiveDate::from_ymd_opt(1950, 5, 15).unwrap();
-        
+
         if let Some(death_date) = generator.generate_death_date(birth_date, &mut rng) {
-            assert!(death_date > birth_date, "Death date should be after birth date");
+            assert!(
+                death_date > birth_date,
+                "Death date should be after birth date"
+            );
         }
     }
 
@@ -880,19 +1026,25 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let generator = GedcomGenerator::new(ruleset.clone());
         let mut rng = rand::thread_rng();
-        
+
         let husband_birth = NaiveDate::from_ymd_opt(1980, 1, 1).unwrap();
         let wife_birth = NaiveDate::from_ymd_opt(1982, 6, 15).unwrap();
-        
+
         let marriage_date = generator.generate_marriage_date(husband_birth, wife_birth, &mut rng);
-        
+
         let husband_age = marriage_date.year() - husband_birth.year();
         let wife_age = marriage_date.year() - wife_birth.year();
-        
-        assert!(husband_age >= ruleset.dates.min_marriage_age,
-                "Husband should be at least {} at marriage", ruleset.dates.min_marriage_age);
-        assert!(wife_age >= ruleset.dates.min_marriage_age,
-                "Wife should be at least {} at marriage", ruleset.dates.min_marriage_age);
+
+        assert!(
+            husband_age >= ruleset.dates.min_marriage_age,
+            "Husband should be at least {} at marriage",
+            ruleset.dates.min_marriage_age
+        );
+        assert!(
+            wife_age >= ruleset.dates.min_marriage_age,
+            "Wife should be at least {} at marriage",
+            ruleset.dates.min_marriage_age
+        );
     }
 
     #[test]
@@ -900,11 +1052,14 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         let marriage_date = NaiveDate::from_ymd_opt(2000, 6, 15).unwrap();
         let divorce_date = generator.generate_divorce_date(marriage_date, &mut rng);
-        
-        assert!(divorce_date > marriage_date, "Divorce date should be after marriage date");
+
+        assert!(
+            divorce_date > marriage_date,
+            "Divorce date should be after marriage date"
+        );
     }
 
     #[test]
@@ -912,15 +1067,21 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let generator = GedcomGenerator::new(ruleset.clone());
         let mut rng = rand::thread_rng();
-        
+
         // Test multiple times to ensure range
         for _ in 0..10 {
             let num_children = generator.calculate_num_children(&mut rng);
-            
-            assert!(num_children >= ruleset.relationships.min_children,
-                    "Number of children should be >= {}", ruleset.relationships.min_children);
-            assert!(num_children <= ruleset.relationships.max_children,
-                    "Number of children should be <= {}", ruleset.relationships.max_children);
+
+            assert!(
+                num_children >= ruleset.relationships.min_children,
+                "Number of children should be >= {}",
+                ruleset.relationships.min_children
+            );
+            assert!(
+                num_children <= ruleset.relationships.max_children,
+                "Number of children should be <= {}",
+                ruleset.relationships.max_children
+            );
         }
     }
 
@@ -929,15 +1090,18 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         // Create a male individual
         let mut male = generator.create_individual(None, None, &mut rng);
         male.sex = Sex::Male;
-        
+
         let spouse = generator.create_spouse(&male, &mut rng);
-        
+
         // Spouse should be female
-        assert!(matches!(spouse.sex, Sex::Female), "Spouse of male should be female");
+        assert!(
+            matches!(spouse.sex, Sex::Female),
+            "Spouse of male should be female"
+        );
     }
 
     #[test]
@@ -945,24 +1109,28 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         let person = generator.create_individual(None, None, &mut rng);
         let person_birth_year = person.birth_date.year();
-        
+
         let spouse = generator.create_spouse(&person, &mut rng);
         let spouse_birth_year = spouse.birth_date.year();
-        
+
         let age_diff = (person_birth_year - spouse_birth_year).abs();
-        
+
         // Spouses should be within 20 years of each other
-        assert!(age_diff <= 20, "Spouses should have similar ages, got {} year difference", age_diff);
+        assert!(
+            age_diff <= 20,
+            "Spouses should have similar ages, got {} year difference",
+            age_diff
+        );
     }
 
     #[test]
     fn test_format_date_normal() {
         let date = NaiveDate::from_ymd_opt(1985, 7, 4).unwrap();
         let formatted = format_date(date);
-        
+
         assert_eq!(formatted, "4 JUL 1985");
     }
 
@@ -970,21 +1138,25 @@ mod tests {
     fn test_format_date_single_digit_day() {
         let date = NaiveDate::from_ymd_opt(2000, 1, 5).unwrap();
         let formatted = format_date(date);
-        
+
         assert_eq!(formatted, "5 JAN 2000");
     }
 
     #[test]
     fn test_month_name_all_months() {
         let expected = vec![
-            "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
-            "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+            "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
         ];
-        
+
         for (i, expected_name) in expected.iter().enumerate() {
             let month = (i + 1) as u32;
-            assert_eq!(month_name(month), *expected_name,
-                      "Month {} should be {}", month, expected_name);
+            assert_eq!(
+                month_name(month),
+                *expected_name,
+                "Month {} should be {}",
+                month,
+                expected_name
+            );
         }
     }
 
@@ -993,15 +1165,20 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         // Create a family first
         let family_id = generator.create_family(None, &mut rng);
-        
+
         // Children should have parent_family_id set
-        let has_children_with_family = generator.individuals.iter()
+        let has_children_with_family = generator
+            .individuals
+            .iter()
             .any(|i| i.parent_family_id == Some(family_id));
-        
-        assert!(has_children_with_family, "Children should have parent_family_id set");
+
+        assert!(
+            has_children_with_family,
+            "Children should have parent_family_id set"
+        );
     }
 
     #[test]
@@ -1009,15 +1186,20 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         // Create a family
         generator.create_family(None, &mut rng);
-        
+
         // Parents should have spouse_family_ids
-        let has_spouse_family = generator.individuals.iter()
+        let has_spouse_family = generator
+            .individuals
+            .iter()
             .any(|i| !i.spouse_family_ids.is_empty());
-        
-        assert!(has_spouse_family, "Married individuals should have spouse_family_ids");
+
+        assert!(
+            has_spouse_family,
+            "Married individuals should have spouse_family_ids"
+        );
     }
 
     #[test]
@@ -1025,13 +1207,15 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.create_family(None, &mut rng);
-        
+
         // Family should have children
-        let has_children = generator.families.iter()
+        let has_children = generator
+            .families
+            .iter()
             .any(|f| !f.children_ids.is_empty());
-        
+
         assert!(has_children, "Families should have children");
     }
 
@@ -1040,14 +1224,19 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.create_family(None, &mut rng);
-        
+
         // Family should have both husband and wife
-        let has_complete_family = generator.families.iter()
+        let has_complete_family = generator
+            .families
+            .iter()
             .any(|f| f.husband_id.is_some() && f.wife_id.is_some());
-        
-        assert!(has_complete_family, "Families should have both husband and wife");
+
+        assert!(
+            has_complete_family,
+            "Families should have both husband and wife"
+        );
     }
 
     #[test]
@@ -1055,15 +1244,21 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         let initial_indi_id = generator.next_indi_id;
         let initial_fam_id = generator.next_fam_id;
-        
+
         generator.create_individual(None, None, &mut rng);
         generator.create_family(None, &mut rng);
-        
-        assert!(generator.next_indi_id > initial_indi_id, "Individual ID should increment");
-        assert!(generator.next_fam_id > initial_fam_id, "Family ID should increment");
+
+        assert!(
+            generator.next_indi_id > initial_indi_id,
+            "Individual ID should increment"
+        );
+        assert!(
+            generator.next_fam_id > initial_fam_id,
+            "Family ID should increment"
+        );
     }
 
     #[test]
@@ -1071,137 +1266,153 @@ mod tests {
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(0, &mut rng);
-        
-        assert_eq!(generator.individuals.len(), 0, "Should generate 0 individuals");
+
+        assert_eq!(
+            generator.individuals.len(),
+            0,
+            "Should generate 0 individuals"
+        );
     }
 
     #[test]
     fn test_generate_exact_count_without_families() {
         let mut ruleset = Ruleset::default_english();
         ruleset.relationships.generate_families = false;
-        
+
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(25, &mut rng);
-        
-        assert_eq!(generator.individuals.len(), 25, "Should generate exactly 25 individuals");
+
+        assert_eq!(
+            generator.individuals.len(),
+            25,
+            "Should generate exactly 25 individuals"
+        );
     }
 
     #[test]
     fn test_write_gedcom_header_contains_version() {
         use std::io::Cursor;
-        
+
         let ruleset = Ruleset::default_english();
         let generator = GedcomGenerator::new(ruleset);
-        
+
         let mut buffer = Vec::new();
         {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = BufWriter::new(cursor);
-            
+
             generator.write_gedcom(&mut writer).unwrap();
             writer.flush().unwrap();
         }
-        
+
         let output = String::from_utf8(buffer).unwrap();
-        
-        assert!(output.contains("2 VERS 5.5.1"), "Should contain GEDCOM version 5.5.1");
+
+        assert!(
+            output.contains("2 VERS 5.5.1"),
+            "Should contain GEDCOM version 5.5.1"
+        );
     }
 
     #[test]
     fn test_write_gedcom_header_contains_charset() {
         use std::io::Cursor;
-        
+
         let ruleset = Ruleset::default_english();
         let generator = GedcomGenerator::new(ruleset);
-        
+
         let mut buffer = Vec::new();
         {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = BufWriter::new(cursor);
-            
+
             generator.write_gedcom(&mut writer).unwrap();
             writer.flush().unwrap();
         }
-        
+
         let output = String::from_utf8(buffer).unwrap();
-        
-        assert!(output.contains("1 CHAR UTF-8"), "Should specify UTF-8 charset");
+
+        assert!(
+            output.contains("1 CHAR UTF-8"),
+            "Should specify UTF-8 charset"
+        );
     }
 
     #[test]
     fn test_write_gedcom_individual_has_name() {
         use std::io::Cursor;
-        
+
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(1, &mut rng);
-        
+
         let mut buffer = Vec::new();
         {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = BufWriter::new(cursor);
-            
+
             generator.write_gedcom(&mut writer).unwrap();
             writer.flush().unwrap();
         }
-        
+
         let output = String::from_utf8(buffer).unwrap();
-        
+
         assert!(output.contains("1 NAME"), "Individual should have NAME tag");
     }
 
     #[test]
     fn test_write_gedcom_individual_has_sex() {
         use std::io::Cursor;
-        
+
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(1, &mut rng);
-        
+
         let mut buffer = Vec::new();
         {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = BufWriter::new(cursor);
-            
+
             generator.write_gedcom(&mut writer).unwrap();
             writer.flush().unwrap();
         }
-        
+
         let output = String::from_utf8(buffer).unwrap();
-        
-        assert!(output.contains("1 SEX M") || output.contains("1 SEX F"),
-                "Individual should have SEX tag");
+
+        assert!(
+            output.contains("1 SEX M") || output.contains("1 SEX F"),
+            "Individual should have SEX tag"
+        );
     }
 
     #[test]
     fn test_write_gedcom_individual_has_birth() {
         use std::io::Cursor;
-        
+
         let ruleset = Ruleset::default_english();
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
-        
+
         generator.generate(1, &mut rng);
-        
+
         let mut buffer = Vec::new();
         {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = BufWriter::new(cursor);
-            
+
             generator.write_gedcom(&mut writer).unwrap();
             writer.flush().unwrap();
         }
-        
+
         let output = String::from_utf8(buffer).unwrap();
-        
+
         assert!(output.contains("1 BIRT"), "Individual should have BIRT tag");
         assert!(output.contains("2 DATE"), "Birth should have DATE");
         assert!(output.contains("2 PLAC"), "Birth should have PLAC");
