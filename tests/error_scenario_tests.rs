@@ -464,7 +464,7 @@ fn test_error_generate_ruleset_invalid_path() {
 #[test]
 fn test_error_generate_ruleset_overwrite() {
     use std::time::{SystemTime, UNIX_EPOCH};
-    
+
     // Use timestamp to ensure unique filename and avoid parallel test conflicts
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
