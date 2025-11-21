@@ -5,17 +5,11 @@
 Download the appropriate binary for your platform from the [latest release](https://github.com/summersjc/Rfamily/releases/latest):
 
 ### Linux
+
 **x86_64 (Intel/AMD):**
 ```bash
 wget https://github.com/summersjc/Rfamily/releases/latest/download/rfamily-linux-x86_64.tar.gz
 tar xzf rfamily-linux-x86_64.tar.gz
-sudo mv rfamily /usr/local/bin/
-```
-
-**ARM64 (Raspberry Pi, ARM servers):**
-```bash
-wget https://github.com/summersjc/Rfamily/releases/latest/download/rfamily-linux-aarch64.tar.gz
-tar xzf rfamily-linux-aarch64.tar.gz
 sudo mv rfamily /usr/local/bin/
 ```
 
