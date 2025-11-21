@@ -220,7 +220,7 @@ impl Ruleset {
                 countries: vec![Country {
                     name: "United States".to_string(),
                     language: "English".to_string(),
-                    cities: vec![
+                    cities: [
                         "New York, New York",
                         "Los Angeles, California",
                         "Chicago, Illinois",
@@ -361,7 +361,7 @@ impl Ruleset {
                 countries: vec![Country {
                     name: "Iceland".to_string(),
                     language: "Icelandic".to_string(),
-                    cities: vec![
+                    cities: [
                         "Reykjavík",
                         "Kópavogur",
                         "Hafnarfjörður",

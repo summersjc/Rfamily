@@ -1208,15 +1208,18 @@ mod tests {
         let mut generator = GedcomGenerator::new(ruleset);
         let mut rng = rand::thread_rng();
 
-        generator.create_family(None, &mut rng);
+        // Create multiple families to ensure at least one has children (probabilistic)
+        for _ in 0..10 {
+            generator.create_family(None, &mut rng);
+        }
 
-        // Family should have children
+        // At least one family should have children
         let has_children = generator
             .families
             .iter()
             .any(|f| !f.children_ids.is_empty());
 
-        assert!(has_children, "Families should have children");
+        assert!(has_children, "At least one family should have children");
     }
 
     #[test]
