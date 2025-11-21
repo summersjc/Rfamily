@@ -323,7 +323,12 @@ impl GedcomGenerator {
             country.name.clone()
         } else {
             let city = &country.cities[rng.gen_range(0..country.cities.len())];
-            format!("{}, {}", city, country.name)
+            // Check if city already contains country name (for full location strings like CSV data)
+            if city.contains(&country.name) {
+                city.clone()
+            } else {
+                format!("{}, {}", city, country.name)
+            }
         }
     }
 
