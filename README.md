@@ -1,5 +1,9 @@
 # Rfamily
 
+[![Rust CI](https://github.com/summersjc/Rfamily/actions/workflows/rust.yml/badge.svg)](https://github.com/summersjc/Rfamily/actions/workflows/rust.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Rust Version](https://img.shields.io/badge/rust-1.70%2B-blue.svg)](https://www.rust-lang.org)
+
 A high-performance Rust command-line tool for generating GEDCOM files with millions of people records using customizable rulesets.
 
 ## Features
