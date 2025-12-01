@@ -3,6 +3,11 @@
 # Pre-commit hook to check Rust code formatting and linting
 # Skip tests as they can be flaky in some environments
 
+# Source cargo environment
+if [ -f "$HOME/.cargo/env" ]; then
+    . "$HOME/.cargo/env"
+fi
+
 echo "Running pre-commit checks..."
 
 # Check formatting

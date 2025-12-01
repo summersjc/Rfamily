@@ -24,6 +24,9 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Ensure the binary is executable
+chmod +x target/release/rfamily
+
 echo ""
 echo "✓ Build successful!"
 echo ""
@@ -46,6 +49,7 @@ case $choice in
         echo ""
         echo "Installing to /usr/local/bin (requires sudo)..."
         sudo cp target/release/rfamily /usr/local/bin/
+        sudo chmod +x /usr/local/bin/rfamily
         echo "✓ Installed to /usr/local/bin/rfamily"
         echo ""
         echo "You can now run: rfamily --help"
@@ -53,6 +57,7 @@ case $choice in
     2)
         mkdir -p ~/.local/bin
         cp target/release/rfamily ~/.local/bin/
+        chmod +x ~/.local/bin/rfamily
         echo "✓ Installed to ~/.local/bin/rfamily"
         echo ""
         if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
