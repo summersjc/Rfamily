@@ -6,6 +6,8 @@ use std::process::Command;
 fn run_rfamily(args: &[&str]) -> std::process::Output {
     Command::new("cargo")
         .arg("run")
+        .arg("-p")
+        .arg("rfamily-cli")
         .arg("--quiet")
         .arg("--")
         .args(args)
@@ -597,7 +599,7 @@ fn test_error_version_flag_if_available() {
     // Version should exit successfully if flag exists
     if output.status.success() {
         let stdout = String::from_utf8_lossy(&output.stdout);
-        assert!(stdout.len() > 0, "Version output should not be empty");
+        assert!(!stdout.is_empty(), "Version output should not be empty");
     }
 }
 

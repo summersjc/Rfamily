@@ -1,0 +1,100 @@
+{
+  "names": {
+    "male_given_names": [
+      "Jón",
+      "Sigurður",
+      "Guðmundur",
+      "Gunnar",
+      "Ólafur",
+      "Einar",
+      "Kristján",
+      "Magnús",
+      "Stefán",
+      "Jóhann",
+      "Árni",
+      "Þór",
+      "Bjarni",
+      "Helgi"
+    ],
+    "female_given_names": [
+      "Guðrún",
+      "Anna",
+      "Kristín",
+      "Margrét",
+      "Sigríður",
+      "Helga",
+      "Ingibjörg",
+      "María",
+      "Jóhanna",
+      "Katrín",
+      "Sigrún",
+      "Ásta",
+      "Elín",
+      "Eva"
+    ],
+    "surnames": [],
+    "use_patronymic": true,
+    "use_matronymic": true,
+    "name_format": "IcelandicStyle"
+  },
+  "dates": {
+    "birth_year_start": 1700,
+    "birth_year_end": 2010,
+    "min_marriage_age": 20,
+    "max_marriage_age": 40,
+    "min_parent_age": 18,
+    "max_parent_age": 48,
+    "life_expectancy_mean": 82,
+    "life_expectancy_stddev": 10,
+    "include_death_dates": true
+  },
+  "locations": {
+    "countries": [
+      {
+        "name": "Iceland",
+        "language": "Icelandic",
+        "cities": [
+          "Reykjavík",
+          "Kópavogur",
+          "Hafnarfjörður",
+          "Akureyri",
+          "Reykjanesbær",
+          "Garðabær",
+          "Mosfellsbær",
+          "Selfoss"
+        ],
+        "probability_weight": 1.0
+      }
+    ],
+    "default_country": "Iceland"
+  },
+  "demographics": {
+    "sex_ratio": 0.51,
+    "twin_rate": 0.032,
+    "triplet_rate": 0.001,
+    "languages": [
+      "Icelandic"
+    ]
+  },
+  "relationships": {
+    "marriage_probability": 0.75,
+    "divorce_probability": 0.3,
+    "remarriage_probability": 0.6,
+    "children_mean": 2.1,
+    "children_stddev": 1.2,
+    "min_children": 0,
+    "max_children": 8,
+    "generate_families": true,
+    "multi_generational": true,
+    "generations": 4
+  },
+  "ordinances": {
+    "include_lds_ordinances": false,
+    "baptism_probability": 0.0,
+    "confirmation_probability": 0.0,
+    "endowment_probability": 0.0,
+    "sealing_to_parents_probability": 0.0,
+    "sealing_to_spouse_probability": 0.0,
+    "temples": []
+  }
+}

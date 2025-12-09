@@ -1,0 +1,17 @@
+[package]
+name = "rfamily-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+rand.workspace = true
+rand_distr.workspace = true
+
+[lib]
+name = "rfamily_core"
+path = "src/lib.rs"

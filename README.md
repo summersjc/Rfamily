@@ -3,8 +3,12 @@
 [![Rust CI](https://github.com/summersjc/Rfamily/actions/workflows/rust.yml/badge.svg)](https://github.com/summersjc/Rfamily/actions/workflows/rust.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust Version](https://img.shields.io/badge/rust-1.70%2B-blue.svg)](https://www.rust-lang.org)
+[![Test Coverage](https://img.shields.io/badge/coverage-81.5%25-brightgreen.svg)](https://github.com/summersjc/Rfamily)
+[![Tests](https://img.shields.io/badge/tests-143_passing-brightgreen.svg)](https://github.com/summersjc/Rfamily)
 
-A high-performance Rust command-line tool for generating GEDCOM files with millions of people records using customizable rulesets.
+A high-performance Rust tool for generating GEDCOM files with millions of people records using customizable rulesets.
+
+**Available as both a CLI tool and web application with REST API!** 🚀
 
 ## Installation
 
@@ -14,7 +18,8 @@ See [INSTALL.md](INSTALL.md) for detailed installation instructions for all plat
 
 ## Features
 
-- **51 Language Presets**: Built-in support for European, Asian, Middle Eastern, Pacific, African, and Latin American languages with culturally appropriate names and locations
+### CLI Tool
+- **52 Language Presets**: Built-in support for European (including English USA & UK), Asian, Middle Eastern, Pacific, African, and Latin American languages with culturally appropriate names and locations
 - **Ruleset-Based Generation**: Define custom rules for names, dates, locations, relationships, and LDS ordinances
 - **Fast Generation**: Optimized for creating millions of records efficiently
 - **Family Relationships**: Generate realistic multi-generational families with marriages, divorces, and children
@@ -23,7 +28,17 @@ See [INSTALL.md](INSTALL.md) for detailed installation instructions for all plat
 - **Streaming Output**: Writes directly to file without loading everything into memory
 - **Progress Tracking**: Real-time progress bar with ETA
 - **Highly Configurable**: Customize every aspect through JSON ruleset files
-- **Single Binary**: All 51 presets embedded - no external files needed
+- **Single Binary**: All 52 presets embedded - no external files needed
+
+### Web Application (NEW!)
+- **REST API**: Full-featured REST API with 6 endpoints for preset management and GEDCOM generation
+- **Swagger Documentation**: Interactive API documentation at `/api/docs`
+- **Web Interface**: User-friendly web UI for generating GEDCOM files
+- **Preview Mode**: Generate small samples (10-100 records) for testing
+- **Batch Generation**: Create files with up to 10M individuals
+- **Real-time Statistics**: View generation metrics (individuals, families, time)
+
+See [README_WEB.md](README_WEB.md) for web application documentation.
 
 ## Quick Start
 
@@ -69,13 +84,33 @@ cp target/release/rfamily /usr/local/bin/
 ./target/release/rfamily --help
 ```
 
-The binary is completely self-contained with all 51 language presets embedded at compile time.
+The binary is completely self-contained with all 52 language presets embedded at compile time.
 
 **Binary Size:** ~1.5 MB (includes all presets and dependencies)
 
 ## Usage Examples
 
-### Using the binary
+### Web Application
+
+Start the web server:
+
+```bash
+# Using cargo
+cargo run -p rfamily-web
+
+# Or run the binary directly
+./target/release/rfamily-web
+```
+
+Then visit:
+- **Web Interface**: http://localhost:3000
+- **API Documentation**: http://localhost:3000/api/docs
+
+See [README_WEB.md](README_WEB.md) and [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for complete web application documentation.
+
+### CLI Usage
+
+#### Using the binary
 
 ```bash
 # List all available language presets

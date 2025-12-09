@@ -41,6 +41,21 @@ jobs:
     - name: Run clippy
       run: cargo clippy -- -D warnings
 
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+    - name: Install cargo-deny
+      run: cargo install --locked cargo-deny
+    - name: Run cargo-deny
+      run: cargo deny check advisories
+    - name: Run cargo audit
+      run: |
+        cargo install cargo-audit
+        cargo audit
+
   build:
     name: Build Release
     runs-on: ${{ matrix.os }}

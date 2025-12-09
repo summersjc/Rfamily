@@ -1,0 +1,39 @@
+[package]
+name = "rfamily-web"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "rfamily-web"
+path = "src/main.rs"
+
+[dependencies]
+# Web framework
+axum = { version = "0.7", features = ["macros"] }
+tokio = { version = "1", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["fs", "cors", "trace", "compression-gzip"] }
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+
+# Internal dependencies
+rfamily-core = { path = "../rfamily-core" }
+rfamily-common = { path = "../rfamily-common" }
+
+# Random (for generation)
+rand.workspace = true
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+anyhow = "1.0"
+
+# API Documentation
+utoipa = { version = "4.2", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "6.0", features = ["axum"] }

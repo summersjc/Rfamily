@@ -1,0 +1,26 @@
+# Clippy linting configuration
+# See: https://doc.rust-lang.org/clippy/configuration.html
+
+# Cognitive complexity threshold
+cognitive-complexity-threshold = 30
+
+# Maximum function parameters
+too-many-arguments-threshold = 8
+
+# Type complexity threshold
+type-complexity-threshold = 250
+
+# Maximum lines in a function
+too-many-lines-threshold = 150
+
+# Single character binding names allowed in closures/iterators
+single-char-binding-names-threshold = 4
+
+# Vec box size threshold
+vec-box-size-threshold = 4096
+
+# Maximum struct field padding
+max-struct-bools = 3
+
+# Allow certain popular crates
+warn-on-all-wildcard-imports = false

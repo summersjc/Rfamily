@@ -6,6 +6,8 @@ use std::process::Command;
 fn run_rfamily(args: &[&str]) -> std::process::Output {
     Command::new("cargo")
         .arg("run")
+        .arg("-p")
+        .arg("rfamily-cli")
         .arg("--quiet")
         .arg("--")
         .args(args)
@@ -68,18 +70,19 @@ fn test_cli_list_presets() {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
 
-    // Check for all 51 presets
+    // Check for all 52 presets
     assert!(stdout.contains("albanian"), "Missing albanian preset");
+    assert!(stdout.contains("british"), "Missing british preset");
     assert!(stdout.contains("japanese"), "Missing japanese preset");
     assert!(stdout.contains("spanish"), "Missing spanish preset");
     assert!(stdout.contains("lds"), "Missing lds preset");
     assert!(stdout.contains("vietnamese"), "Missing vietnamese preset");
 
-    // Count lines (should be 54: header + 51 presets + 2 blank lines)
+    // Count lines (should be 55: header + 52 presets + 2 blank lines)
     let line_count = stdout.lines().filter(|l| !l.trim().is_empty()).count();
     assert!(
-        line_count >= 52,
-        "Should list all 51+ presets, got {}",
+        line_count >= 53,
+        "Should list all 52+ presets, got {}",
         line_count
     );
 }

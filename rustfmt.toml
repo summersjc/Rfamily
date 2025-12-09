@@ -1,0 +1,19 @@
+# Rust formatting configuration
+# See: https://rust-lang.github.io/rustfmt/
+# Only stable features - unstable features require nightly Rust
+
+# Edition
+edition = "2021"
+
+# Line width
+max_width = 100
+
+# Imports
+reorder_imports = true
+
+# Chains
+chain_width = 60
+
+# Miscellaneous
+use_small_heuristics = "Default"
+newline_style = "Unix"

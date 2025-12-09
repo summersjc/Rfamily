@@ -1,0 +1,122 @@
+{
+  "names": {
+    "male_given_names": [
+      "太郎",
+      "次郎",
+      "健",
+      "勇",
+      "誠",
+      "浩",
+      "隆",
+      "学",
+      "博",
+      "修",
+      "哲",
+      "昭",
+      "正",
+      "武",
+      "幸"
+    ],
+    "female_given_names": [
+      "花子",
+      "美子",
+      "幸子",
+      "洋子",
+      "恵子",
+      "真理子",
+      "由美",
+      "陽子",
+      "明美",
+      "裕子",
+      "直子",
+      "智子",
+      "加奈子",
+      "里奈",
+      "愛"
+    ],
+    "surnames": [
+      "佐藤",
+      "鈴木",
+      "高橋",
+      "田中",
+      "伊藤",
+      "渡辺",
+      "山本",
+      "中村",
+      "小林",
+      "加藤",
+      "吉田",
+      "山田",
+      "佐々木",
+      "山口",
+      "松本"
+    ],
+    "use_patronymic": false,
+    "use_matronymic": false,
+    "name_format": "WesternStyle"
+  },
+  "dates": {
+    "birth_year_start": 1700,
+    "birth_year_end": 2010,
+    "min_marriage_age": 18,
+    "max_marriage_age": 45,
+    "min_parent_age": 16,
+    "max_parent_age": 50,
+    "life_expectancy_mean": 75,
+    "life_expectancy_stddev": 15,
+    "include_death_dates": true
+  },
+  "locations": {
+    "countries": [
+      {
+        "name": "Japan",
+        "language": "Japanese",
+        "cities": [
+          "Tokyo",
+          "Osaka",
+          "Yokohama",
+          "Nagoya",
+          "Sapporo",
+          "Kobe",
+          "Kyoto",
+          "Fukuoka"
+        ],
+        "probability_weight": 1.0
+      }
+    ],
+    "default_country": "Japan"
+  },
+  "demographics": {
+    "sex_ratio": 0.51,
+    "twin_rate": 0.032,
+    "triplet_rate": 0.001,
+    "languages": [
+      "Japanese"
+    ]
+  },
+  "relationships": {
+    "marriage_probability": 0.85,
+    "divorce_probability": 0.4,
+    "remarriage_probability": 0.5,
+    "children_mean": 2.5,
+    "children_stddev": 1.5,
+    "min_children": 0,
+    "max_children": 12,
+    "generate_families": true,
+    "multi_generational": true,
+    "generations": 4
+  },
+  "ordinances": {
+    "include_lds_ordinances": false,
+    "baptism_probability": 0.0,
+    "confirmation_probability": 0.0,
+    "endowment_probability": 0.0,
+    "sealing_to_parents_probability": 0.0,
+    "sealing_to_spouse_probability": 0.0,
+    "temples": [
+      "SLAKE",
+      "PROVO",
+      "MANTI"
+    ]
+  }
+}

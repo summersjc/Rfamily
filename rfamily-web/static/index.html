@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rfamily - GEDCOM Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* FamilySearch-inspired color palette */
+            --fs-green-primary: #72B043;
+            --fs-green-dark: #588B2D;
+            --fs-green-light: #E8F5E0;
+            --fs-gray-900: #2A2A2A;
+            --fs-gray-700: #4A4A4A;
+            --fs-gray-500: #767676;
+            --fs-gray-300: #D4D4D4;
+            --fs-gray-100: #F5F5F5;
+            --fs-white: #FFFFFF;
+            --fs-border: #E0E0E0;
+            --fs-shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--fs-gray-900);
+            background: var(--fs-gray-100);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            background: var(--fs-white);
+            border-bottom: 3px solid var(--fs-green-primary);
+            padding: 20px 0;
+            box-shadow: 0 2px 4px var(--fs-shadow);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            font-size: 2rem;
+        }
+
+        .header-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-title h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--fs-gray-900);
+        }
+
+        .header-title p {
+            font-size: 0.95rem;
+            color: var(--fs-gray-500);
+            margin-top: 2px;
+        }
+
+        .header-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .header-link {
+            color: var(--fs-green-dark);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .header-link:hover {
+            background: var(--fs-green-light);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--fs-white);
+            border: 1px solid var(--fs-border);
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px var(--fs-shadow);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--fs-border);
+            background: var(--fs-white);
+        }
+
+        .card-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--fs-gray-900);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        /* Form Elements */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--fs-gray-700);
+            font-size: 0.95rem;
+        }
+
+        select, input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--fs-border);
+            border-radius: 6px;
+            font-size: 1rem;
+            margin-bottom: 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: var(--fs-white);
+            color: var(--fs-gray-900);
+        }
+
+        select:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: var(--fs-green-primary);
+            box-shadow: 0 0 0 3px var(--fs-green-light);
+        }
+
+        /* Buttons */
+        button {
+            background: var(--fs-green-primary);
+            color: var(--fs-white);
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            font-weight: 600;
+            margin-right: 12px;
+            margin-bottom: 12px;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--fs-green-dark);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            background: var(--fs-gray-300);
+            cursor: not-allowed;
+        }
+
+        .button-secondary {
+            background: var(--fs-white);
+            color: var(--fs-green-primary);
+            border: 2px solid var(--fs-green-primary);
+        }
+
+        .button-secondary:hover:not(:disabled) {
+            background: var(--fs-green-light);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: var(--fs-gray-100);
+            padding: 20px;
+            border-radius: 6px;
+            border-left: 4px solid var(--fs-green-primary);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--fs-gray-500);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--fs-green-dark);
+        }
+
+        /* Preview */
+        .preview-box {
+            background: var(--fs-gray-900);
+            color: #D4D4D4;
+            padding: 20px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre;
+            margin-top: 16px;
+            border: 1px solid var(--fs-border);
+        }
+
+        /* Messages */
+        .message {
+            padding: 16px 20px;
+            border-radius: 6px;
+            margin-top: 16px;
+            font-size: 0.95rem;
+        }
+
+        .message-error {
+            background: #FEE;
+            border: 1px solid #FCC;
+            color: #C00;
+        }
+
+        .message-success {
+            background: var(--fs-green-light);
+            border: 1px solid var(--fs-green-primary);
+            color: var(--fs-green-dark);
+        }
+
+        .message-info {
+            background: #E3F2FD;
+            border: 1px solid #90CAF9;
+            color: #1565C0;
+        }
+
+        /* Loading */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Preset Grid */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .preset-item {
+            padding: 12px 16px;
+            background: var(--fs-gray-100);
+            border: 1px solid var(--fs-border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .preset-name {
+            font-weight: 600;
+            color: var(--fs-gray-900);
+        }
+
+        .preset-region {
+            color: var(--fs-gray-500);
+            font-size: 0.8rem;
+            display: block;
+            margin-top: 4px;
+        }
+
+        /* Info Section */
+        .info-section {
+            background: var(--fs-green-light);
+            border-left: 4px solid var(--fs-green-primary);
+            padding: 16px 20px;
+            border-radius: 4px;
+            margin-top: 16px;
+        }
+
+        .info-section p {
+            color: var(--fs-gray-700);
+            font-size: 0.95rem;
+            margin: 4px 0;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--fs-white);
+            border-top: 1px solid var(--fs-border);
+            padding: 24px 0;
+            margin-top: 40px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            text-align: center;
+            color: var(--fs-gray-500);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo-section">
+                <span class="logo">🌳</span>
+                <div class="header-title">
+                    <h1>Rfamily</h1>
+                    <p>GEDCOM File Generator</p>
+                </div>
+            </div>
+            <div class="header-links">
+                <a href="/api/docs" class="header-link" target="_blank">📚 API Docs</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Preset Selection Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2>📋 Select Language Preset</h2>
+            </div>
+            <div class="card-body">
+                <label for="presetSelect">Choose from 52 language presets:</label>
+                <select id="presetSelect">
+                    <option value="">Loading presets...</option>
+                </select>
+                <div id="presetInfo"></div>
+            </div>
+        </div>
+
+        <!-- Preview Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2>👁️ Generate Preview</h2>
+            </div>
+            <div class="card-body">
+                <label for="previewCount">Number of individuals (10-100):</label>
+                <input type="number" id="previewCount" value="50" min="10" max="100">
+
+                <button onclick="generatePreview()" id="previewBtn">Generate Preview</button>
+
+                <div id="previewStats"></div>
+                <div id="previewResult"></div>
+            </div>
+        </div>
+
+        <!-- Full Generation Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2>💾 Generate Full GEDCOM File</h2>
+            </div>
+            <div class="card-body">
+                <label for="generateCount">Number of individuals:</label>
+                <input type="number" id="generateCount" value="100000" min="100" max="10000000" step="1000">
+
+                <button onclick="generateFull()" id="generateBtn">Generate & Download</button>
+
+                <div class="info-section">
+                    <p><strong>Note:</strong> Large files (1M+ individuals) may take several minutes to generate.</p>
+                    <p>The file will download automatically when complete.</p>
+                </div>
+
+                <div id="generateResult"></div>
+            </div>
+        </div>
+
+        <!-- Available Presets Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2>🌍 Available Presets</h2>
+            </div>
+            <div class="card-body">
+                <div id="presetList"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p>Rfamily GEDCOM Generator • Open Source MIT License</p>
+            <p style="margin-top: 8px;">Generating realistic family tree data for testing and research</p>
+        </div>
+    </footer>
+
+    <script>
+        const API_BASE = '/api';
+        let allPresets = [];
+
+        // Load presets on page load
+        async function loadPresets() {
+            try {
+                const response = await fetch(`${API_BASE}/presets`);
+                const data = await response.json();
+                allPresets = data.presets;
+
+                const select = document.getElementById('presetSelect');
+                select.innerHTML = '<option value="">-- Select a preset --</option>';
+
+                data.presets.forEach(preset => {
+                    const option = document.createElement('option');
+                    option.value = preset.name;
+                    option.textContent = `${preset.display_name} (${preset.region})`;
+                    select.appendChild(option);
+                });
+
+                // Display preset list grouped by region
+                const presetList = document.getElementById('presetList');
+                const groupedByRegion = {};
+                data.presets.forEach(preset => {
+                    if (!groupedByRegion[preset.region]) {
+                        groupedByRegion[preset.region] = [];
+                    }
+                    groupedByRegion[preset.region].push(preset);
+                });
+
+                presetList.innerHTML = Object.entries(groupedByRegion)
+                    .map(([region, presets]) => `
+                        <div style="margin-bottom: 24px;">
+                            <h3 style="color: var(--fs-green-dark); margin-bottom: 12px; font-size: 1.1rem;">${region}</h3>
+                            <div class="preset-grid">
+                                ${presets.map(p => `
+                                    <div class="preset-item">
+                                        <span class="preset-name">${p.display_name}</span>
+                                        <span class="preset-region">${region}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('');
+
+            } catch (error) {
+                console.error('Error loading presets:', error);
+                document.getElementById('presetSelect').innerHTML =
+                    '<option value="">Error loading presets</option>';
+            }
+        }
+
+        // Generate preview
+        async function generatePreview() {
+            const presetName = document.getElementById('presetSelect').value;
+            const count = parseInt(document.getElementById('previewCount').value);
+            const btn = document.getElementById('previewBtn');
+            const statsDiv = document.getElementById('previewStats');
+            const resultDiv = document.getElementById('previewResult');
+
+            if (!presetName) {
+                resultDiv.innerHTML = '<div class="message message-error">Please select a preset first</div>';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Generating<span class="loading-spinner"></span>';
+            statsDiv.innerHTML = '';
+            resultDiv.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/preview`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ count, preset_name: presetName })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Generation failed');
+                }
+
+                const data = await response.json();
+
+                // Show statistics
+                statsDiv.innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Individuals</div>
+                            <div class="stat-value">${data.statistics.total_individuals}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Males</div>
+                            <div class="stat-value">${data.statistics.males}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Females</div>
+                            <div class="stat-value">${data.statistics.females}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Families</div>
+                            <div class="stat-value">${data.statistics.families}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Generation Time</div>
+                            <div class="stat-value">${data.statistics.generation_time_ms}ms</div>
+                        </div>
+                    </div>
+                `;
+
+                // Show preview
+                resultDiv.innerHTML = `
+                    <div class="message message-success">✓ Preview generated successfully!</div>
+                    <div class="preview-box">${escapeHtml(data.gedcom)}</div>
+                `;
+
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="message message-error">Error: ${error.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Generate Preview';
+            }
+        }
+
+        // Generate full file
+        async function generateFull() {
+            const presetName = document.getElementById('presetSelect').value;
+            const count = parseInt(document.getElementById('generateCount').value);
+            const btn = document.getElementById('generateBtn');
+            const resultDiv = document.getElementById('generateResult');
+
+            if (!presetName) {
+                resultDiv.innerHTML = '<div class="message message-error">Please select a preset first</div>';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Generating<span class="loading-spinner"></span>';
+            resultDiv.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ count, preset_name: presetName })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Generation failed');
+                }
+
+                // Get filename from Content-Disposition header
+                const contentDisposition = response.headers.get('Content-Disposition');
+                const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+                const filename = filenameMatch ? filenameMatch[1] : `family-${count}-${presetName}.ged`;
+
+                // Download file
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                resultDiv.innerHTML = `
+                    <div class="message message-success">
+                        ✓ Successfully generated and downloaded: <strong>${filename}</strong><br>
+                        Generated ${count.toLocaleString()} individuals
+                    </div>
+                `;
+
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="message message-error">Error: ${error.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Generate & Download';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Load presets when page loads
+        loadPresets();
+    </script>
+</body>
+</html>

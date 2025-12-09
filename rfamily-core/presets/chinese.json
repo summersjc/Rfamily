@@ -1,0 +1,122 @@
+{
+  "names": {
+    "male_given_names": [
+      "偉",
+      "明",
+      "建國",
+      "建華",
+      "強",
+      "軍",
+      "勇",
+      "傑",
+      "磊",
+      "濤",
+      "鵬",
+      "龍",
+      "浩",
+      "宇",
+      "凱"
+    ],
+    "female_given_names": [
+      "秀英",
+      "秀蘭",
+      "麗",
+      "靜",
+      "敏",
+      "玉蘭",
+      "芳",
+      "娟",
+      "麗娜",
+      "雪",
+      "燕",
+      "婷",
+      "莉",
+      "穎",
+      "嫻"
+    ],
+    "surnames": [
+      "王",
+      "李",
+      "張",
+      "劉",
+      "陳",
+      "楊",
+      "黃",
+      "趙",
+      "吳",
+      "周",
+      "徐",
+      "孫",
+      "馬",
+      "朱",
+      "胡"
+    ],
+    "use_patronymic": false,
+    "use_matronymic": false,
+    "name_format": "WesternStyle"
+  },
+  "dates": {
+    "birth_year_start": 1700,
+    "birth_year_end": 2010,
+    "min_marriage_age": 18,
+    "max_marriage_age": 45,
+    "min_parent_age": 16,
+    "max_parent_age": 50,
+    "life_expectancy_mean": 75,
+    "life_expectancy_stddev": 15,
+    "include_death_dates": true
+  },
+  "locations": {
+    "countries": [
+      {
+        "name": "Taiwan",
+        "language": "Chinese (Traditional)",
+        "cities": [
+          "Taipei",
+          "Kaohsiung",
+          "Taichung",
+          "Tainan",
+          "Hsinchu",
+          "Keelung",
+          "Chiayi",
+          "Changhua"
+        ],
+        "probability_weight": 1.0
+      }
+    ],
+    "default_country": "Taiwan"
+  },
+  "demographics": {
+    "sex_ratio": 0.51,
+    "twin_rate": 0.032,
+    "triplet_rate": 0.001,
+    "languages": [
+      "Chinese (Traditional)"
+    ]
+  },
+  "relationships": {
+    "marriage_probability": 0.85,
+    "divorce_probability": 0.4,
+    "remarriage_probability": 0.5,
+    "children_mean": 2.5,
+    "children_stddev": 1.5,
+    "min_children": 0,
+    "max_children": 12,
+    "generate_families": true,
+    "multi_generational": true,
+    "generations": 4
+  },
+  "ordinances": {
+    "include_lds_ordinances": false,
+    "baptism_probability": 0.0,
+    "confirmation_probability": 0.0,
+    "endowment_probability": 0.0,
+    "sealing_to_parents_probability": 0.0,
+    "sealing_to_spouse_probability": 0.0,
+    "temples": [
+      "SLAKE",
+      "PROVO",
+      "MANTI"
+    ]
+  }
+}

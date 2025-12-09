@@ -1,0 +1,16 @@
+[package]
+name = "rfamily-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "rfamily"
+path = "src/main.rs"
+
+[dependencies]
+rfamily-core = { path = "../rfamily-core" }
+clap = { version = "4.5", features = ["derive"] }
+indicatif = "0.17"
+rand.workspace = true

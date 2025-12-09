@@ -1,0 +1,122 @@
+{
+  "names": {
+    "male_given_names": [
+      "Jaan",
+      "Peeter",
+      "Mart",
+      "Andres",
+      "Meelis",
+      "Toomas",
+      "Priit",
+      "Raivo",
+      "Urmas",
+      "Ants",
+      "Kalev",
+      "Rein",
+      "Tanel",
+      "Marko",
+      "Kaarel"
+    ],
+    "female_given_names": [
+      "Katrin",
+      "Liisa",
+      "Mari",
+      "Anne",
+      "Piret",
+      "Kristiina",
+      "Kadri",
+      "Kaire",
+      "Merle",
+      "Tiina",
+      "Helena",
+      "Sirje",
+      "Margit",
+      "Annika",
+      "Maris"
+    ],
+    "surnames": [
+      "Tamm",
+      "Sepp",
+      "Saar",
+      "Mägi",
+      "Kask",
+      "Kuusk",
+      "Kukk",
+      "Rebane",
+      "Ilves",
+      "Pärn",
+      "Teder",
+      "Uusmaa",
+      "Lepp",
+      "Org",
+      "Raud"
+    ],
+    "use_patronymic": false,
+    "use_matronymic": false,
+    "name_format": "WesternStyle"
+  },
+  "dates": {
+    "birth_year_start": 1700,
+    "birth_year_end": 2010,
+    "min_marriage_age": 18,
+    "max_marriage_age": 45,
+    "min_parent_age": 16,
+    "max_parent_age": 50,
+    "life_expectancy_mean": 75,
+    "life_expectancy_stddev": 15,
+    "include_death_dates": true
+  },
+  "locations": {
+    "countries": [
+      {
+        "name": "Estonia",
+        "language": "Estonian",
+        "cities": [
+          "Tallinn",
+          "Tartu",
+          "Narva",
+          "Pärnu",
+          "Kohtla-Järve",
+          "Viljandi",
+          "Rakvere",
+          "Maardu"
+        ],
+        "probability_weight": 1.0
+      }
+    ],
+    "default_country": "Estonia"
+  },
+  "demographics": {
+    "sex_ratio": 0.51,
+    "twin_rate": 0.032,
+    "triplet_rate": 0.001,
+    "languages": [
+      "Estonian"
+    ]
+  },
+  "relationships": {
+    "marriage_probability": 0.85,
+    "divorce_probability": 0.4,
+    "remarriage_probability": 0.5,
+    "children_mean": 2.5,
+    "children_stddev": 1.5,
+    "min_children": 0,
+    "max_children": 12,
+    "generate_families": true,
+    "multi_generational": true,
+    "generations": 4
+  },
+  "ordinances": {
+    "include_lds_ordinances": false,
+    "baptism_probability": 0.0,
+    "confirmation_probability": 0.0,
+    "endowment_probability": 0.0,
+    "sealing_to_parents_probability": 0.0,
+    "sealing_to_spouse_probability": 0.0,
+    "temples": [
+      "SLAKE",
+      "PROVO",
+      "MANTI"
+    ]
+  }
+}
