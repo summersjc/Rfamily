@@ -252,7 +252,7 @@ fn calculate_statistics(
     let families = generator.families();
 
     let males = individuals
-        .iter()
+        .values()
         .filter(|i| matches!(i.sex, Sex::Male))
         .count();
     let females = individuals.len() - males;

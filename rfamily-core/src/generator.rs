@@ -1,11 +1,12 @@
 use crate::ruleset::*;
 use chrono::{Datelike, NaiveDate};
 use rand::Rng;
+use std::collections::HashMap;
 use std::io::{BufWriter, Write};
 
 pub struct GedcomGenerator {
     ruleset: Ruleset,
-    individuals: Vec<Individual>,
+    individuals: HashMap<usize, Individual>,
     families: Vec<Family>,
     next_indi_id: usize,
     next_fam_id: usize,
@@ -47,7 +48,7 @@ impl GedcomGenerator {
     pub fn new(ruleset: Ruleset) -> Self {
         GedcomGenerator {
             ruleset,
-            individuals: Vec::new(),
+            individuals: HashMap::new(),
             families: Vec::new(),
             next_indi_id: 1,
             next_fam_id: 1,
@@ -65,7 +66,7 @@ impl GedcomGenerator {
     fn generate_individuals(&mut self, count: usize, rng: &mut impl Rng) {
         for _ in 0..count {
             let individual = self.create_individual(None, None, rng);
-            self.individuals.push(individual);
+            self.individuals.insert(individual.id, individual);
         }
     }
 
@@ -83,7 +84,7 @@ impl GedcomGenerator {
         for _gen in 1..self.ruleset.relationships.generations {
             let current_individuals: Vec<usize> = self
                 .individuals
-                .iter()
+                .values()
                 .filter(|i| i.parent_family_id.is_some())
                 .map(|i| i.id)
                 .collect();
@@ -93,12 +94,8 @@ impl GedcomGenerator {
                     return;
                 }
 
-                let person = self
-                    .individuals
-                    .iter()
-                    .find(|i| i.id == person_id)
-                    .unwrap()
-                    .clone();
+                // O(1) lookup instead of O(n) search
+                let person = self.individuals.get(&person_id).unwrap().clone();
                 let age = 2024 - person.birth_date.year();
 
                 if age >= self.ruleset.dates.min_marriage_age
@@ -115,64 +112,47 @@ impl GedcomGenerator {
         self.next_fam_id += 1;
 
         let (husband, wife) = if let Some(pid) = person_id {
-            let person = self
-                .individuals
-                .iter()
-                .find(|i| i.id == pid)
-                .unwrap()
-                .clone();
+            // O(1) lookup instead of O(n) search
+            let person = self.individuals.get(&pid).unwrap().clone();
             match person.sex {
                 Sex::Male => {
                     let wife = self.create_spouse(&person, rng);
                     let wife_id = wife.id;
-                    self.individuals.push(wife);
+                    self.individuals.insert(wife_id, wife);
                     (pid, wife_id)
                 }
                 Sex::Female => {
                     let husband = self.create_spouse(&person, rng);
                     let husband_id = husband.id;
-                    self.individuals.push(husband);
+                    self.individuals.insert(husband_id, husband);
                     (husband_id, pid)
                 }
             }
         } else {
             let husband = self.create_individual(None, None, rng);
             let husband_id = husband.id;
-            self.individuals.push(husband);
+            self.individuals.insert(husband_id, husband);
 
-            let husband_ref = self
-                .individuals
-                .iter()
-                .find(|i| i.id == husband_id)
-                .unwrap()
-                .clone();
+            // O(1) lookup instead of O(n) search
+            let husband_ref = self.individuals.get(&husband_id).unwrap().clone();
             let wife = self.create_spouse(&husband_ref, rng);
             let wife_id = wife.id;
-            self.individuals.push(wife);
+            self.individuals.insert(wife_id, wife);
 
             (husband_id, wife_id)
         };
 
-        // Update individuals with family reference
-        if let Some(h) = self.individuals.iter_mut().find(|i| i.id == husband) {
+        // Update individuals with family reference - O(1) lookup instead of O(n) search
+        if let Some(h) = self.individuals.get_mut(&husband) {
             h.spouse_family_ids.push(family_id);
         }
-        if let Some(w) = self.individuals.iter_mut().find(|i| i.id == wife) {
+        if let Some(w) = self.individuals.get_mut(&wife) {
             w.spouse_family_ids.push(family_id);
         }
 
-        let husband_birth = self
-            .individuals
-            .iter()
-            .find(|i| i.id == husband)
-            .unwrap()
-            .birth_date;
-        let wife_birth = self
-            .individuals
-            .iter()
-            .find(|i| i.id == wife)
-            .unwrap()
-            .birth_date;
+        // O(1) lookups instead of O(n) searches
+        let husband_birth = self.individuals.get(&husband).unwrap().birth_date;
+        let wife_birth = self.individuals.get(&wife).unwrap().birth_date;
 
         let marriage_date = self.generate_marriage_date(husband_birth, wife_birth, rng);
         let marriage_place = self.select_location(rng);
@@ -182,12 +162,10 @@ impl GedcomGenerator {
         let mut children_ids = Vec::new();
 
         for _ in 0..num_children {
-            let child = self.create_individual(Some(husband), Some(wife), rng);
+            let mut child = self.create_individual(Some(husband), Some(wife), rng);
+            child.parent_family_id = Some(family_id);
             children_ids.push(child.id);
-
-            let mut child_mut = child.clone();
-            child_mut.parent_family_id = Some(family_id);
-            self.individuals.push(child_mut);
+            self.individuals.insert(child.id, child);
         }
 
         let divorce_date = if rng.gen_bool(self.ruleset.relationships.divorce_probability) {
@@ -305,7 +283,8 @@ impl GedcomGenerator {
     ) -> String {
         if self.ruleset.names.use_patronymic {
             if let Some(fid) = father_id {
-                let father = self.individuals.iter().find(|i| i.id == fid).unwrap();
+                // O(1) lookup instead of O(n) search
+                let father = self.individuals.get(&fid).unwrap();
                 return format!("{}son", father.given_name);
             }
         }
@@ -349,7 +328,8 @@ impl GedcomGenerator {
         rng: &mut impl Rng,
     ) -> NaiveDate {
         if let Some(fid) = father_id {
-            if let Some(father) = self.individuals.iter().find(|i| i.id == fid) {
+            // O(1) lookup instead of O(n) search
+            if let Some(father) = self.individuals.get(&fid) {
                 let parent_age = rng.gen_range(
                     self.ruleset.dates.min_parent_age..self.ruleset.dates.max_parent_age,
                 );
@@ -424,7 +404,7 @@ impl GedcomGenerator {
     }
 
     /// Get a reference to the generated individuals
-    pub fn individuals(&self) -> &[Individual] {
+    pub fn individuals(&self) -> &HashMap<usize, Individual> {
         &self.individuals
     }
 
@@ -436,7 +416,8 @@ impl GedcomGenerator {
     pub fn write_gedcom<W: Write>(&self, writer: &mut BufWriter<W>) -> std::io::Result<()> {
         self.write_header(writer)?;
 
-        for individual in &self.individuals {
+        // Iterate over HashMap values
+        for individual in self.individuals.values() {
             self.write_individual(writer, individual)?;
         }
 
@@ -657,7 +638,7 @@ mod tests {
 
         generator.generate(5, &mut rng);
 
-        for individual in &generator.individuals {
+        for individual in generator.individuals.values() {
             assert!(!individual.given_name.is_empty());
             assert!(!individual.surname.is_empty());
             assert!(!individual.birth_place.is_empty());
@@ -675,12 +656,12 @@ mod tests {
 
         let males = generator
             .individuals
-            .iter()
+            .values()
             .filter(|i| matches!(i.sex, Sex::Male))
             .count();
         let females = generator
             .individuals
-            .iter()
+            .values()
             .filter(|i| matches!(i.sex, Sex::Female))
             .count();
 
@@ -700,7 +681,7 @@ mod tests {
         let current_year = chrono::Utc::now().year();
         let max_death_year = current_year - 110;
 
-        for individual in &generator.individuals {
+        for individual in generator.individuals.values() {
             if let Some(death_date) = individual.death_date {
                 assert!(
                     death_date.year() <= max_death_year,
@@ -723,7 +704,7 @@ mod tests {
 
         generator.generate(50, &mut rng);
 
-        for individual in &generator.individuals {
+        for individual in generator.individuals.values() {
             assert!(individual.birth_date.year() >= birth_year_start);
             assert!(individual.birth_date.year() <= birth_year_end);
         }
@@ -811,7 +792,7 @@ mod tests {
         generator.generate(10, &mut rng);
 
         // Check that generated individuals use Spanish names
-        let has_spanish_name = generator.individuals.iter().any(|i| {
+        let has_spanish_name = generator.individuals.values().any(|i| {
             ruleset.names.male_given_names.contains(&i.given_name)
                 || ruleset.names.female_given_names.contains(&i.given_name)
         });
@@ -926,7 +907,7 @@ mod tests {
         let father = generator.create_individual(None, None, &mut rng);
         let father_given_name = father.given_name.clone();
         let father_id = father.id;
-        generator.individuals.push(father);
+        generator.individuals.insert(father_id, father);
 
         // Create child with father (using patronymic system)
         let surname = generator.select_surname(Some(father_id), None, &Sex::Male, &mut rng);
@@ -1008,7 +989,7 @@ mod tests {
         let parent = generator.create_individual(None, None, &mut rng);
         let parent_birth = parent.birth_date;
         let parent_id = parent.id;
-        generator.individuals.push(parent);
+        generator.individuals.insert(parent_id, parent);
 
         // Generate child birth date
         let child_birth = generator.generate_birth_date(Some(parent_id), None, &mut rng);
@@ -1187,7 +1168,7 @@ mod tests {
         // Children should have parent_family_id set
         let has_children_with_family = generator
             .individuals
-            .iter()
+            .values()
             .any(|i| i.parent_family_id == Some(family_id));
 
         assert!(
@@ -1208,7 +1189,7 @@ mod tests {
         // Parents should have spouse_family_ids
         let has_spouse_family = generator
             .individuals
-            .iter()
+            .values()
             .any(|i| !i.spouse_family_ids.is_empty());
 
         assert!(
