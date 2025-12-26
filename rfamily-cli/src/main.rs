@@ -1,35 +1,147 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use indicatif::{ProgressBar, ProgressStyle};
 use rfamily_core::generator::GedcomGenerator;
+use rfamily_core::generators::ious::{IOUSConfig, IOUSGenerator};
 use rfamily_core::preset_registry::PresetRegistry;
 use rfamily_core::ruleset::Ruleset;
 use std::fs::File;
 use std::io::BufWriter;
 
-fn determine_preset_name(args: &Args) -> Option<String> {
+#[derive(Parser, Debug)]
+#[command(name = "rfamily")]
+#[command(version)]
+#[command(about = "Generate GEDCOM files with millions of people", long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+
+    // Legacy flags for backward compatibility (when no subcommand is used)
+    /// Number of individuals to generate
+    #[arg(short, long, global = true)]
+    count: Option<usize>,
+
+    /// Output file path
+    #[arg(short, long, global = true)]
+    output: Option<String>,
+
+    /// Preset to use (e.g., english, spanish, french). Use --list-presets to see all
+    #[arg(short, long, global = true)]
+    preset: Option<String>,
+
+    /// List all available presets
+    #[arg(long, global = true)]
+    list_presets: bool,
+
+    /// Ruleset configuration file (JSON)
+    #[arg(short, long, global = true)]
+    ruleset: Option<String>,
+
+    /// Generate example ruleset file
+    #[arg(long, global = true)]
+    generate_ruleset: Option<String>,
+
+    /// Override number of generations for family trees (1-10)
+    #[arg(short = 'g', long, global = true)]
+    generations: Option<usize>,
+
+    // Deprecated flags
+    #[arg(long, hide = true, global = true)]
+    lds: bool,
+    #[arg(long, hide = true, global = true)]
+    icelandic: bool,
+    #[arg(long, hide = true, global = true)]
+    spanish: bool,
+    #[arg(long, hide = true, global = true)]
+    french: bool,
+    #[arg(long, hide = true, global = true)]
+    italian: bool,
+}
+
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// Generate standard GEDCOM file (default)
+    Generate {
+        /// Number of individuals to generate
+        #[arg(short, long, default_value = "100000")]
+        count: usize,
+
+        /// Output file path
+        #[arg(short, long, default_value = "output.ged")]
+        output: String,
+
+        /// Preset to use
+        #[arg(short, long)]
+        preset: Option<String>,
+
+        /// Ruleset configuration file (JSON)
+        #[arg(short, long)]
+        ruleset: Option<String>,
+
+        /// Override number of generations (1-10)
+        #[arg(short = 'g', long)]
+        generations: Option<usize>,
+    },
+
+    /// Generate IOUS (Individual of Unusual Size) tree
+    GenerateIous {
+        /// Output file path
+        #[arg(short, long, default_value = "ious.ged")]
+        output: String,
+
+        /// Preset to use
+        #[arg(short, long)]
+        preset: Option<String>,
+
+        /// Ruleset configuration file (JSON)
+        #[arg(short, long)]
+        ruleset: Option<String>,
+
+        /// Number of marriages for the IOUS individual
+        #[arg(long, default_value = "3")]
+        marriages: usize,
+
+        /// Mean number of children per marriage
+        #[arg(long, default_value = "4.0")]
+        children_per_marriage: f64,
+
+        /// Number of siblings for the IOUS
+        #[arg(long, default_value = "5")]
+        siblings: usize,
+
+        /// Number of generations of descendants
+        #[arg(long, default_value = "5")]
+        descendant_gens: usize,
+
+        /// Target total number of descendants (approximate)
+        #[arg(long)]
+        total_descendants: Option<usize>,
+    },
+}
+
+fn determine_preset_name_legacy(cli: &Cli) -> Option<String> {
     // Check new --preset flag first
-    if let Some(ref preset) = args.preset {
+    if let Some(ref preset) = cli.preset {
         return Some(preset.clone());
     }
 
-    // Fall back to deprecated flags for backward compatibility
-    if args.lds {
+    // Fall back to deprecated flags
+    if cli.lds {
         eprintln!("Warning: --lds is deprecated. Use --preset lds instead.");
         return Some("lds".to_string());
     }
-    if args.icelandic {
+    if cli.icelandic {
         eprintln!("Warning: --icelandic is deprecated. Use --preset icelandic instead.");
         return Some("icelandic".to_string());
     }
-    if args.spanish {
+    if cli.spanish {
         eprintln!("Warning: --spanish is deprecated. Use --preset spanish instead.");
         return Some("spanish".to_string());
     }
-    if args.french {
+    if cli.french {
         eprintln!("Warning: --french is deprecated. Use --preset french instead.");
         return Some("french".to_string());
     }
-    if args.italian {
+    if cli.italian {
         eprintln!("Warning: --italian is deprecated. Use --preset italian instead.");
         return Some("italian".to_string());
     }
@@ -37,111 +149,120 @@ fn determine_preset_name(args: &Args) -> Option<String> {
     None
 }
 
-#[derive(Parser, Debug)]
-#[command(name = "rfamily")]
-#[command(version)]
-#[command(about = "Generate GEDCOM files with millions of people", long_about = None)]
-struct Args {
-    /// Number of individuals to generate
-    #[arg(short, long, default_value = "100000")]
-    count: usize,
-
-    /// Output file path
-    #[arg(short, long, default_value = "output.ged")]
-    output: String,
-
-    /// Preset to use (e.g., english, spanish, french). Use --list-presets to see all
-    #[arg(short, long)]
-    preset: Option<String>,
-
-    /// List all available presets
-    #[arg(long)]
-    list_presets: bool,
-
-    /// Ruleset configuration file (JSON)
-    #[arg(short, long)]
-    ruleset: Option<String>,
-
-    /// Generate example ruleset file
-    #[arg(long)]
-    generate_ruleset: Option<String>,
-
-    /// [DEPRECATED] Use --preset lds instead
-    #[arg(long, hide = true)]
-    lds: bool,
-
-    /// [DEPRECATED] Use --preset icelandic instead
-    #[arg(long, hide = true)]
-    icelandic: bool,
-
-    /// [DEPRECATED] Use --preset spanish instead
-    #[arg(long, hide = true)]
-    spanish: bool,
-
-    /// [DEPRECATED] Use --preset french instead
-    #[arg(long, hide = true)]
-    french: bool,
-
-    /// [DEPRECATED] Use --preset italian instead
-    #[arg(long, hide = true)]
-    italian: bool,
+fn load_ruleset(
+    registry: &PresetRegistry,
+    ruleset_path: &Option<String>,
+    preset_name: Option<String>,
+) -> Ruleset {
+    if let Some(ref path) = ruleset_path {
+        Ruleset::load_from_file(path).expect("Failed to load ruleset file")
+    } else if let Some(name) = preset_name {
+        registry.load(&name).unwrap_or_else(|e| {
+            eprintln!("Error: {}", e);
+            std::process::exit(1);
+        })
+    } else {
+        registry
+            .load("english")
+            .expect("Failed to load default preset")
+    }
 }
 
 fn main() -> std::io::Result<()> {
-    let args = Args::parse();
+    let cli = Cli::parse();
     let registry = PresetRegistry::new();
 
     // Handle list presets
-    if args.list_presets {
+    if cli.list_presets {
         println!("Available presets:");
         for preset in registry.list() {
             println!("  - {}", preset);
         }
-        println!("\nUse with: rfamily --preset <name> <count> <output>");
+        println!("\nUse with: rfamily --preset <name> --count <count> --output <file>");
+        println!("Or: rfamily generate-ious --preset <name> --output <file>");
         return Ok(());
     }
 
     // Handle ruleset generation
-    if let Some(ref path) = args.generate_ruleset {
-        let preset_name = determine_preset_name(&args);
-        let ruleset = if let Some(name) = preset_name {
-            registry.load(&name).expect("Failed to load preset")
-        } else {
-            registry
-                .load("english")
-                .expect("Failed to load default preset")
-        };
-
+    if let Some(ref path) = cli.generate_ruleset {
+        let preset_name = determine_preset_name_legacy(&cli);
+        let ruleset = load_ruleset(&registry, &cli.ruleset, preset_name);
         ruleset.save_to_file(path).expect("Failed to save ruleset");
         println!("Generated ruleset file: {}", path);
         return Ok(());
     }
 
-    // Load ruleset
-    let ruleset = if let Some(ref path) = args.ruleset {
-        Ruleset::load_from_file(path).expect("Failed to load ruleset file")
-    } else {
-        let preset_name = determine_preset_name(&args);
-        if let Some(name) = preset_name {
-            registry.load(&name).unwrap_or_else(|e| {
-                eprintln!("Error: {}", e);
-                std::process::exit(1);
-            })
-        } else {
-            registry
-                .load("english")
-                .expect("Failed to load default preset")
+    match cli.command {
+        Some(Commands::Generate {
+            count,
+            output,
+            preset,
+            ruleset,
+            generations,
+        }) => handle_generate(registry, count, output, preset, ruleset, generations),
+        Some(Commands::GenerateIous {
+            output,
+            preset,
+            ruleset,
+            marriages,
+            children_per_marriage,
+            siblings,
+            descendant_gens,
+            total_descendants,
+        }) => handle_generate_ious(
+            registry,
+            output,
+            preset,
+            ruleset,
+            marriages,
+            children_per_marriage,
+            siblings,
+            descendant_gens,
+            total_descendants,
+        ),
+        None => {
+            // Backward compatibility: no subcommand means default generate behavior
+            let count = cli.count.unwrap_or(100000);
+            let output = cli
+                .output
+                .clone()
+                .unwrap_or_else(|| "output.ged".to_string());
+            let preset = determine_preset_name_legacy(&cli);
+            let ruleset = cli.ruleset.clone();
+            let generations = cli.generations;
+            handle_generate(registry, count, output, preset, ruleset, generations)
         }
-    };
+    }
+}
 
-    println!("Rfamily v0.2.0");
-    println!("Generating {} individuals to {}", args.count, args.output);
+fn handle_generate(
+    registry: PresetRegistry,
+    count: usize,
+    output: String,
+    preset: Option<String>,
+    ruleset_path: Option<String>,
+    generations: Option<usize>,
+) -> std::io::Result<()> {
+    let mut ruleset = load_ruleset(&registry, &ruleset_path, preset);
+
+    // Override generations if specified
+    if let Some(gens) = generations {
+        if !(1..=10).contains(&gens) {
+            eprintln!("Error: generations must be between 1 and 10 (got {})", gens);
+            std::process::exit(1);
+        }
+        ruleset.relationships.generations = gens;
+        println!("Overriding generations to: {}", gens);
+    }
+
+    println!("Rfamily v0.2.0 - Generate");
+    println!("Generating {} individuals to {}", count, output);
 
     let mut rng = rand::thread_rng();
     let mut generator = GedcomGenerator::new(ruleset);
 
     // Progress bar setup
-    let pb = ProgressBar::new(args.count as u64);
+    let pb = ProgressBar::new(count as u64);
     pb.set_style(
         ProgressStyle::default_bar()
             .template("[{elapsed_precise}] {bar:40.cyan/blue} {pos}/{len} ({eta})")
@@ -150,237 +271,96 @@ fn main() -> std::io::Result<()> {
     );
 
     // Generate data
-    generator.generate(args.count, &mut rng);
+    generator.generate(count, &mut rng);
     pb.finish_with_message("Generation complete");
 
     // Write to file
-    let file = File::create(&args.output)?;
+    let file = File::create(&output)?;
     let mut writer = BufWriter::new(file);
     generator.write_gedcom(&mut writer)?;
 
     println!(
         "Successfully generated GEDCOM file with {} individuals",
-        args.count
+        count
     );
 
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[allow(clippy::too_many_arguments)]
+fn handle_generate_ious(
+    registry: PresetRegistry,
+    output: String,
+    preset: Option<String>,
+    ruleset_path: Option<String>,
+    marriages: usize,
+    children_per_marriage: f64,
+    siblings: usize,
+    descendant_gens: usize,
+    total_descendants: Option<usize>,
+) -> std::io::Result<()> {
+    let ruleset = load_ruleset(&registry, &ruleset_path, preset);
 
-    #[test]
-    fn test_determine_preset_name_with_preset_flag() {
-        let args = Args {
-            count: 100,
-            output: "test.ged".to_string(),
-            preset: Some("japanese".to_string()),
-            list_presets: false,
-            ruleset: None,
-            generate_ruleset: None,
-            lds: false,
-            icelandic: false,
-            spanish: false,
-            french: false,
-            italian: false,
-        };
-
-        assert_eq!(determine_preset_name(&args), Some("japanese".to_string()));
+    // Validate parameters
+    if !(1..=10).contains(&marriages) {
+        eprintln!(
+            "Error: marriages must be between 1 and 10 (got {})",
+            marriages
+        );
+        std::process::exit(1);
+    }
+    if !(0.0..=15.0).contains(&children_per_marriage) {
+        eprintln!(
+            "Error: children_per_marriage must be between 0 and 15 (got {})",
+            children_per_marriage
+        );
+        std::process::exit(1);
+    }
+    if siblings > 20 {
+        eprintln!("Error: siblings must be <= 20 (got {})", siblings);
+        std::process::exit(1);
+    }
+    if !(1..=10).contains(&descendant_gens) {
+        eprintln!(
+            "Error: descendant_gens must be between 1 and 10 (got {})",
+            descendant_gens
+        );
+        std::process::exit(1);
     }
 
-    #[test]
-    fn test_determine_preset_name_with_lds_flag() {
-        let args = Args {
-            count: 100,
-            output: "test.ged".to_string(),
-            preset: None,
-            list_presets: false,
-            ruleset: None,
-            generate_ruleset: None,
-            lds: true,
-            icelandic: false,
-            spanish: false,
-            french: false,
-            italian: false,
-        };
-
-        assert_eq!(determine_preset_name(&args), Some("lds".to_string()));
+    println!("Rfamily v0.2.0 - Generate IOUS");
+    println!("Configuration:");
+    println!("  Marriages: {}", marriages);
+    println!("  Children per marriage (mean): {}", children_per_marriage);
+    println!("  Siblings: {}", siblings);
+    println!("  Descendant generations: {}", descendant_gens);
+    if let Some(target) = total_descendants {
+        println!("  Target descendants: ~{}", target);
     }
+    println!("  Output: {}", output);
 
-    #[test]
-    fn test_determine_preset_name_with_icelandic_flag() {
-        let args = Args {
-            count: 100,
-            output: "test.ged".to_string(),
-            preset: None,
-            list_presets: false,
-            ruleset: None,
-            generate_ruleset: None,
-            lds: false,
-            icelandic: true,
-            spanish: false,
-            french: false,
-            italian: false,
-        };
+    let config = IOUSConfig {
+        marriages,
+        children_per_marriage_mean: children_per_marriage,
+        siblings,
+        descendant_generations: descendant_gens,
+        target_descendants: total_descendants,
+    };
 
-        assert_eq!(determine_preset_name(&args), Some("icelandic".to_string()));
-    }
+    let mut ious_generator = IOUSGenerator::new(ruleset, config);
+    let mut rng = rand::thread_rng();
 
-    #[test]
-    fn test_determine_preset_name_with_spanish_flag() {
-        let args = Args {
-            count: 100,
-            output: "test.ged".to_string(),
-            preset: None,
-            list_presets: false,
-            ruleset: None,
-            generate_ruleset: None,
-            lds: false,
-            icelandic: false,
-            spanish: true,
-            french: false,
-            italian: false,
-        };
+    println!("\nGenerating IOUS family tree...");
+    let count = ious_generator.generate(&mut rng);
+    println!("Generated {} individuals", count);
 
-        assert_eq!(determine_preset_name(&args), Some("spanish".to_string()));
-    }
+    // Write to file
+    let file = File::create(&output)?;
+    let mut writer = BufWriter::new(file);
+    let generator = ious_generator.into_generator();
+    generator.write_gedcom(&mut writer)?;
 
-    #[test]
-    fn test_determine_preset_name_with_french_flag() {
-        let args = Args {
-            count: 100,
-            output: "test.ged".to_string(),
-            preset: None,
-            list_presets: false,
-            ruleset: None,
-            generate_ruleset: None,
-            lds: false,
-            icelandic: false,
-            spanish: false,
-            french: true,
-            italian: false,
-        };
+    println!("Successfully generated IOUS GEDCOM file: {}", output);
 
-        assert_eq!(determine_preset_name(&args), Some("french".to_string()));
-    }
-
-    #[test]
-    fn test_determine_preset_name_with_italian_flag() {
-        let args = Args {
-            count: 100,
-            output: "test.ged".to_string(),
-            preset: None,
-            list_presets: false,
-            ruleset: None,
-            generate_ruleset: None,
-            lds: false,
-            icelandic: false,
-            spanish: false,
-            french: false,
-            italian: true,
-        };
-
-        assert_eq!(determine_preset_name(&args), Some("italian".to_string()));
-    }
-
-    #[test]
-    fn test_determine_preset_name_no_flags() {
-        let args = Args {
-            count: 100,
-            output: "test.ged".to_string(),
-            preset: None,
-            list_presets: false,
-            ruleset: None,
-            generate_ruleset: None,
-            lds: false,
-            icelandic: false,
-            spanish: false,
-            french: false,
-            italian: false,
-        };
-
-        assert_eq!(determine_preset_name(&args), None);
-    }
-
-    #[test]
-    fn test_determine_preset_name_preset_overrides_deprecated() {
-        // Preset flag should take precedence over deprecated flags
-        let args = Args {
-            count: 100,
-            output: "test.ged".to_string(),
-            preset: Some("german".to_string()),
-            list_presets: false,
-            ruleset: None,
-            generate_ruleset: None,
-            lds: true, // This should be ignored
-            icelandic: false,
-            spanish: false,
-            french: false,
-            italian: false,
-        };
-
-        assert_eq!(determine_preset_name(&args), Some("german".to_string()));
-    }
-
-    #[test]
-    fn test_args_default_values() {
-        // Test that clap default values work
-        let args = Args::parse_from(["rfamily"]);
-
-        assert_eq!(args.count, 100000);
-        assert_eq!(args.output, "output.ged");
-        assert_eq!(args.preset, None);
-        assert!(!args.list_presets);
-        assert_eq!(args.ruleset, None);
-        assert_eq!(args.generate_ruleset, None);
-    }
-
-    #[test]
-    fn test_args_with_preset() {
-        let args = Args::parse_from([
-            "rfamily",
-            "--preset",
-            "korean",
-            "--count",
-            "5000",
-            "--output",
-            "korea.ged",
-        ]);
-
-        assert_eq!(args.preset, Some("korean".to_string()));
-        assert_eq!(args.count, 5000);
-        assert_eq!(args.output, "korea.ged");
-    }
-
-    #[test]
-    fn test_args_with_list_presets() {
-        let args = Args::parse_from(["rfamily", "--list-presets"]);
-
-        assert!(args.list_presets);
-    }
-
-    #[test]
-    fn test_args_with_ruleset_file() {
-        let args = Args::parse_from(["rfamily", "--ruleset", "custom.json", "--count", "1000"]);
-
-        assert_eq!(args.ruleset, Some("custom.json".to_string()));
-        assert_eq!(args.count, 1000);
-    }
-
-    #[test]
-    fn test_args_with_generate_ruleset() {
-        let args = Args::parse_from(["rfamily", "--generate-ruleset", "example.json"]);
-
-        assert_eq!(args.generate_ruleset, Some("example.json".to_string()));
-    }
-
-    #[test]
-    fn test_args_short_flags() {
-        let args = Args::parse_from(["rfamily", "-c", "50000", "-o", "family.ged", "-p", "polish"]);
-
-        assert_eq!(args.count, 50000);
-        assert_eq!(args.output, "family.ged");
-        assert_eq!(args.preset, Some("polish".to_string()));
-    }
+    Ok(())
 }

@@ -5,11 +5,11 @@ use std::collections::HashMap;
 use std::io::{BufWriter, Write};
 
 pub struct GedcomGenerator {
-    ruleset: Ruleset,
-    individuals: HashMap<usize, Individual>,
-    families: Vec<Family>,
-    next_indi_id: usize,
-    next_fam_id: usize,
+    pub(crate) ruleset: Ruleset,
+    pub(crate) individuals: HashMap<usize, Individual>,
+    pub(crate) families: Vec<Family>,
+    pub(crate) next_indi_id: usize,
+    pub(crate) next_fam_id: usize,
 }
 
 #[derive(Debug, Clone)]

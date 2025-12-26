@@ -89,6 +89,10 @@ struct Args {
     /// [DEPRECATED] Use --preset italian instead
     #[arg(long, hide = true)]
     italian: bool,
+
+    /// Override number of generations for family trees (1-10)
+    #[arg(short = 'g', long)]
+    generations: Option<usize>,
 }
 
 fn main() -> std::io::Result<()> {
@@ -122,7 +126,7 @@ fn main() -> std::io::Result<()> {
     }
 
     // Load ruleset
-    let ruleset = if let Some(ref path) = args.ruleset {
+    let mut ruleset = if let Some(ref path) = args.ruleset {
         Ruleset::load_from_file(path).expect("Failed to load ruleset file")
     } else {
         let preset_name = determine_preset_name(&args);
@@ -137,6 +141,16 @@ fn main() -> std::io::Result<()> {
                 .expect("Failed to load default preset")
         }
     };
+
+    // Override generations if specified
+    if let Some(generations) = args.generations {
+        if generations < 1 || generations > 10 {
+            eprintln!("Error: generations must be between 1 and 10 (got {})", generations);
+            std::process::exit(1);
+        }
+        ruleset.relationships.generations = generations;
+        println!("Overriding generations to: {}", generations);
+    }
 
     println!("Rfamily v0.2.0");
     println!("Generating {} individuals to {}", args.count, args.output);
@@ -188,6 +202,7 @@ mod tests {
             spanish: false,
             french: false,
             italian: false,
+            generations: None,
         };
 
         assert_eq!(determine_preset_name(&args), Some("japanese".to_string()));
@@ -207,6 +222,7 @@ mod tests {
             spanish: false,
             french: false,
             italian: false,
+            generations: None,
         };
 
         assert_eq!(determine_preset_name(&args), Some("lds".to_string()));
@@ -226,6 +242,7 @@ mod tests {
             spanish: false,
             french: false,
             italian: false,
+            generations: None,
         };
 
         assert_eq!(determine_preset_name(&args), Some("icelandic".to_string()));
@@ -245,6 +262,7 @@ mod tests {
             spanish: true,
             french: false,
             italian: false,
+            generations: None,
         };
 
         assert_eq!(determine_preset_name(&args), Some("spanish".to_string()));
@@ -264,6 +282,7 @@ mod tests {
             spanish: false,
             french: true,
             italian: false,
+            generations: None,
         };
 
         assert_eq!(determine_preset_name(&args), Some("french".to_string()));
@@ -283,6 +302,7 @@ mod tests {
             spanish: false,
             french: false,
             italian: true,
+            generations: None,
         };
 
         assert_eq!(determine_preset_name(&args), Some("italian".to_string()));
@@ -302,6 +322,7 @@ mod tests {
             spanish: false,
             french: false,
             italian: false,
+            generations: None,
         };
 
         assert_eq!(determine_preset_name(&args), None);
@@ -322,9 +343,27 @@ mod tests {
             spanish: false,
             french: false,
             italian: false,
+            generations: None,
         };
 
         assert_eq!(determine_preset_name(&args), Some("german".to_string()));
+    }
+
+    #[test]
+    fn test_generations_override() {
+        let args = Args::parse_from(&[
+            "rfamily",
+            "--preset",
+            "english",
+            "--count",
+            "1000",
+            "--generations",
+            "6",
+        ]);
+
+        assert_eq!(args.generations, Some(6));
+        assert_eq!(args.count, 1000);
+        assert_eq!(args.preset, Some("english".to_string()));
     }
 
     #[test]
