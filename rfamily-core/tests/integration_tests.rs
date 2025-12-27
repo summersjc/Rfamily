@@ -628,3 +628,137 @@ fn test_cli_all_pacific_presets() {
 
     cleanup_file(output_file);
 }
+
+#[test]
+fn test_cli_generate_ious() {
+    let output_file = "test_ious_output.ged";
+    cleanup_file(output_file);
+
+    let output = run_rfamily(&[
+        "generate-ious",
+        "--preset",
+        "english",
+        "--output",
+        output_file,
+        "--marriages",
+        "2",
+        "--children-per-marriage",
+        "3.0",
+        "--siblings",
+        "2",
+        "--descendant-gens",
+        "2",
+    ]);
+
+    assert!(
+        output.status.success(),
+        "generate-ious command should succeed"
+    );
+
+    let (valid, content) = verify_gedcom_file(output_file);
+    assert!(valid, "Generated IOUS file should be valid GEDCOM");
+
+    // Verify we have a reasonable number of individuals
+    let count = count_individuals(&content);
+    assert!(
+        count >= 5,
+        "IOUS should generate at least 5 individuals (IOUS + spouse + children), got {}",
+        count
+    );
+
+    // Verify we have families
+    let family_count = content
+        .lines()
+        .filter(|line| line.starts_with("0 @F"))
+        .count();
+    assert!(
+        family_count >= 2,
+        "IOUS with 2 marriages should have at least 2 families, got {}",
+        family_count
+    );
+
+    cleanup_file(output_file);
+}
+
+#[test]
+fn test_cli_generate_ious_with_target_limit() {
+    let output_file = "test_ious_limited.ged";
+    cleanup_file(output_file);
+
+    let output = run_rfamily(&[
+        "generate-ious",
+        "--preset",
+        "japanese",
+        "--output",
+        output_file,
+        "--marriages",
+        "5",
+        "--children-per-marriage",
+        "5.0",
+        "--siblings",
+        "5",
+        "--descendant-gens",
+        "3",
+        "--total-descendants",
+        "30",
+    ]);
+
+    assert!(
+        output.status.success(),
+        "generate-ious with limit should succeed"
+    );
+
+    let (valid, content) = verify_gedcom_file(output_file);
+    assert!(valid, "Generated IOUS file should be valid GEDCOM");
+
+    // Verify limit is respected
+    let count = count_individuals(&content);
+    assert!(
+        count <= 30,
+        "IOUS should respect total-descendants limit, got {}",
+        count
+    );
+
+    cleanup_file(output_file);
+}
+
+#[test]
+fn test_cli_generate_ious_minimal() {
+    let output_file = "test_ious_minimal.ged";
+    cleanup_file(output_file);
+
+    // Minimal IOUS generation
+    let output = run_rfamily(&[
+        "generate-ious",
+        "--preset",
+        "spanish",
+        "--output",
+        output_file,
+        "--marriages",
+        "1",
+        "--children-per-marriage",
+        "1.0",
+        "--siblings",
+        "0",
+        "--descendant-gens",
+        "1",
+    ]);
+
+    assert!(
+        output.status.success(),
+        "Minimal IOUS generation should succeed"
+    );
+
+    let (valid, content) = verify_gedcom_file(output_file);
+    assert!(valid, "Minimal IOUS file should be valid GEDCOM");
+
+    // Should have at least IOUS + spouse + 1 child
+    let count = count_individuals(&content);
+    assert!(
+        count >= 3,
+        "Minimal IOUS should have at least 3 individuals, got {}",
+        count
+    );
+
+    cleanup_file(output_file);
+}

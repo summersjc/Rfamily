@@ -518,4 +518,340 @@ mod tests {
         assert_eq!(individual.surname, Some("Doe".to_string()));
         assert_eq!(individual.sex, Some("M".to_string()));
     }
+
+    // Error handling tests
+    #[test]
+    fn test_parse_invalid_line_format() {
+        let mut parser = GedcomParser::new(ParseMode::Lenient);
+        let result = parser.parse_line("", 1);
+        assert!(result.is_err());
+
+        let result = parser.parse_line("not a number TAG", 1);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_line_missing_tag() {
+        let mut parser = GedcomParser::new(ParseMode::Lenient);
+        let result = parser.parse_line("0", 1);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_incomplete_xref() {
+        let mut parser = GedcomParser::new(ParseMode::Lenient);
+        let result = parser.parse_line("0 @I1@", 1);
+        assert!(result.is_err(), "Should fail with incomplete xref line");
+    }
+
+    // CONC/CONT continuation tests
+    #[test]
+    fn test_parse_conc_continuation() {
+        let gedcom_data = "0 HEAD
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME John
+2 CONC  /Doe/
+1 SEX M
+0 TRLR
+";
+        let mut parser = GedcomParser::new(ParseMode::Lenient);
+        let cursor = Cursor::new(gedcom_data.as_bytes());
+        let gedcom = parser.parse_reader(BufReader::new(cursor)).unwrap();
+
+        let individual = gedcom.individuals.get("@I1@").unwrap();
+        assert_eq!(individual.name, Some("John /Doe/".to_string()));
+    }
+
+    #[test]
+    fn test_parse_cont_continuation() {
+        let gedcom_data = "0 HEAD
+1 CHAR UTF-8
+0 @N1@ NOTE This is a long note
+1 CONT that continues on the next line
+1 CONT and another line
+0 TRLR
+";
+        let mut parser = GedcomParser::new(ParseMode::Lenient);
+        let cursor = Cursor::new(gedcom_data.as_bytes());
+        let result = parser.parse_reader(BufReader::new(cursor));
+        assert!(result.is_ok(), "Should handle CONT continuation");
+    }
+
+    // Family record tests
+    #[test]
+    fn test_parse_family_record() {
+        let gedcom_data = "0 HEAD
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME John /Doe/
+1 SEX M
+0 @I2@ INDI
+1 NAME Jane /Smith/
+1 SEX F
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 MARR
+2 DATE 1 JAN 2000
+2 PLAC New York, USA
+0 TRLR
+";
+        let mut parser = GedcomParser::new(ParseMode::Lenient);
+        let cursor = Cursor::new(gedcom_data.as_bytes());
+        let gedcom = parser.parse_reader(BufReader::new(cursor)).unwrap();
+
+        assert_eq!(gedcom.individuals.len(), 2);
+        assert_eq!(gedcom.families.len(), 1);
+
+        let family = gedcom.families.get("@F1@").unwrap();
+        assert_eq!(family.husband_xref, Some("@I1@".to_string()));
+        assert_eq!(family.wife_xref, Some("@I2@".to_string()));
+        assert_eq!(family.marriage_date, Some("1 JAN 2000".to_string()));
+        assert_eq!(family.marriage_place, Some("New York, USA".to_string()));
+    }
+
+    #[test]
+    fn test_parse_family_with_children() {
+        let gedcom_data = "0 HEAD
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME Father /Smith/
+1 SEX M
+0 @I2@ INDI
+1 NAME Mother /Jones/
+1 SEX F
+0 @I3@ INDI
+1 NAME Child1 /Smith/
+1 SEX M
+1 FAMC @F1@
+0 @I4@ INDI
+1 NAME Child2 /Smith/
+1 SEX F
+1 FAMC @F1@
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 CHIL @I3@
+1 CHIL @I4@
+0 TRLR
+";
+        let mut parser = GedcomParser::new(ParseMode::Lenient);
+        let cursor = Cursor::new(gedcom_data.as_bytes());
+        let gedcom = parser.parse_reader(BufReader::new(cursor)).unwrap();
+
+        assert_eq!(gedcom.individuals.len(), 4);
+        assert_eq!(gedcom.families.len(), 1);
+
+        let family = gedcom.families.get("@F1@").unwrap();
+        assert_eq!(family.children_xrefs.len(), 2);
+        assert!(family.children_xrefs.contains(&"@I3@".to_string()));
+        assert!(family.children_xrefs.contains(&"@I4@".to_string()));
+
+        let child = gedcom.individuals.get("@I3@").unwrap();
+        assert!(child.parent_family_xrefs.contains(&"@F1@".to_string()));
+    }
+
+    #[test]
+    fn test_parse_individual_with_birth_death() {
+        let gedcom_data = "0 HEAD
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME John /Doe/
+1 SEX M
+1 BIRT
+2 DATE 15 MAR 1950
+2 PLAC Boston, Massachusetts, USA
+1 DEAT
+2 DATE 20 DEC 2020
+2 PLAC Miami, Florida, USA
+0 TRLR
+";
+        let mut parser = GedcomParser::new(ParseMode::Lenient);
+        let cursor = Cursor::new(gedcom_data.as_bytes());
+        let gedcom = parser.parse_reader(BufReader::new(cursor)).unwrap();
+
+        let individual = gedcom.individuals.get("@I1@").unwrap();
+        assert_eq!(individual.birth_date, Some("15 MAR 1950".to_string()));
+        assert_eq!(
+            individual.birth_place,
+            Some("Boston, Massachusetts, USA".to_string())
+        );
+        assert_eq!(individual.death_date, Some("20 DEC 2020".to_string()));
+        assert_eq!(
+            individual.death_place,
+            Some("Miami, Florida, USA".to_string())
+        );
+    }
+
+    #[test]
+    fn test_parse_divorce() {
+        let gedcom_data = "0 HEAD
+1 CHAR UTF-8
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 MARR
+2 DATE 1 JAN 2000
+1 DIV
+2 DATE 15 JUN 2010
+0 TRLR
+";
+        let mut parser = GedcomParser::new(ParseMode::Lenient);
+        let cursor = Cursor::new(gedcom_data.as_bytes());
+        let gedcom = parser.parse_reader(BufReader::new(cursor)).unwrap();
+
+        let family = gedcom.families.get("@F1@").unwrap();
+        assert_eq!(family.divorce_date, Some("15 JUN 2010".to_string()));
+    }
+
+    // Strict mode tests
+    #[test]
+    fn test_strict_mode_with_unknown_tag() {
+        let gedcom_data = "0 HEAD
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME John /Doe/
+1 CUSTOM_TAG Some Value
+0 TRLR
+";
+        let mut parser = GedcomParser::new(ParseMode::Strict);
+        let cursor = Cursor::new(gedcom_data.as_bytes());
+        let result = parser.parse_reader(BufReader::new(cursor));
+        // In strict mode, unknown tags at level 0 might be handled
+        // This test documents current behavior
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_lenient_mode_collects_warnings() {
+        let gedcom_data = "0 HEAD
+1 CHAR UTF-8
+0 @UNKNOWN@ CUSTOM
+1 NAME Test
+0 TRLR
+";
+        let mut parser = GedcomParser::new(ParseMode::Lenient);
+        let cursor = Cursor::new(gedcom_data.as_bytes());
+        let _result = parser.parse_reader(BufReader::new(cursor)).unwrap();
+
+        assert!(
+            parser.warnings().len() > 0,
+            "Should collect warnings for unknown tags"
+        );
+    }
+
+    // Edge cases
+    #[test]
+    fn test_parse_empty_lines() {
+        let gedcom_data = "0 HEAD
+1 CHAR UTF-8
+
+0 @I1@ INDI
+1 NAME John /Doe/
+
+0 TRLR
+";
+        let mut parser = GedcomParser::new(ParseMode::Lenient);
+        let cursor = Cursor::new(gedcom_data.as_bytes());
+        let gedcom = parser.parse_reader(BufReader::new(cursor)).unwrap();
+
+        assert_eq!(gedcom.individuals.len(), 1);
+    }
+
+    #[test]
+    fn test_parse_multiple_individuals() {
+        let gedcom_data = "0 HEAD
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME Person One
+1 SEX M
+0 @I2@ INDI
+1 NAME Person Two
+1 SEX F
+0 @I3@ INDI
+1 NAME Person Three
+1 SEX M
+0 TRLR
+";
+        let mut parser = GedcomParser::new(ParseMode::Lenient);
+        let cursor = Cursor::new(gedcom_data.as_bytes());
+        let gedcom = parser.parse_reader(BufReader::new(cursor)).unwrap();
+
+        assert_eq!(gedcom.individuals.len(), 3);
+        assert_eq!(gedcom.record_order.len(), 3);
+        assert_eq!(gedcom.record_order[0], "@I1@");
+        assert_eq!(gedcom.record_order[1], "@I2@");
+        assert_eq!(gedcom.record_order[2], "@I3@");
+    }
+
+    #[test]
+    fn test_parse_header_fields() {
+        let gedcom_data = "0 HEAD
+1 SOUR FamilyTree
+1 CHAR UTF-8
+1 LANG English
+0 TRLR
+";
+        let mut parser = GedcomParser::new(ParseMode::Lenient);
+        let cursor = Cursor::new(gedcom_data.as_bytes());
+        let gedcom = parser.parse_reader(BufReader::new(cursor)).unwrap();
+
+        assert_eq!(gedcom.header.encoding, "UTF-8");
+        assert_eq!(gedcom.header.source, Some("FamilyTree".to_string()));
+        assert_eq!(gedcom.header.language, Some("English".to_string()));
+    }
+
+    #[test]
+    fn test_parse_complex_family_structure() {
+        let gedcom_data = "0 HEAD
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME John /Doe/
+1 SEX M
+1 FAMS @F1@
+1 FAMS @F2@
+0 @I2@ INDI
+1 NAME Jane /Smith/
+1 SEX F
+1 FAMS @F1@
+0 @I3@ INDI
+1 NAME Mary /Johnson/
+1 SEX F
+1 FAMS @F2@
+0 @I4@ INDI
+1 NAME Child /Doe/
+1 SEX M
+1 FAMC @F1@
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 CHIL @I4@
+1 MARR
+2 DATE 1 JAN 2000
+1 DIV
+2 DATE 1 JAN 2005
+0 @F2@ FAM
+1 HUSB @I1@
+1 WIFE @I3@
+1 MARR
+2 DATE 1 JAN 2006
+0 TRLR
+";
+        let mut parser = GedcomParser::new(ParseMode::Lenient);
+        let cursor = Cursor::new(gedcom_data.as_bytes());
+        let gedcom = parser.parse_reader(BufReader::new(cursor)).unwrap();
+
+        assert_eq!(gedcom.individuals.len(), 4);
+        assert_eq!(gedcom.families.len(), 2);
+
+        let person = gedcom.individuals.get("@I1@").unwrap();
+        assert_eq!(person.spouse_family_xrefs.len(), 2);
+
+        let family1 = gedcom.families.get("@F1@").unwrap();
+        assert!(family1.divorce_date.is_some());
+
+        let family2 = gedcom.families.get("@F2@").unwrap();
+        assert!(family2.divorce_date.is_none());
+    }
 }

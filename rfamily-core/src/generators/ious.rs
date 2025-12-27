@@ -538,4 +538,409 @@ mod tests {
         assert!(count > 0);
         assert!(count <= 50);
     }
+
+    // Family structure validation tests
+    #[test]
+    fn test_ious_has_siblings() {
+        let ruleset = Ruleset::default_english();
+        let config = IOUSConfig {
+            marriages: 1,
+            children_per_marriage_mean: 2.0,
+            siblings: 3,
+            descendant_generations: 1,
+            target_descendants: None,
+        };
+
+        let mut generator = IOUSGenerator::new(ruleset, config);
+        let mut rng = rand::thread_rng();
+
+        generator.generate(&mut rng);
+
+        // IOUS should have siblings + IOUS itself in parent family
+        let families_with_multiple_children: Vec<_> = generator
+            .generator
+            .families
+            .iter()
+            .filter(|f| f.children_ids.len() >= 2)
+            .collect();
+
+        assert!(
+            !families_with_multiple_children.is_empty(),
+            "Should have family with IOUS and siblings"
+        );
+
+        // Find the IOUS parent family (the one without husband/wife, or with most children)
+        let parent_family = generator
+            .generator
+            .families
+            .iter()
+            .max_by_key(|f| f.children_ids.len());
+
+        assert!(parent_family.is_some());
+        let parent_family = parent_family.unwrap();
+        assert!(
+            parent_family.children_ids.len() >= 2,
+            "Parent family should have IOUS + siblings"
+        );
+    }
+
+    #[test]
+    fn test_ious_multiple_marriages() {
+        let ruleset = Ruleset::default_english();
+        let config = IOUSConfig {
+            marriages: 3,
+            children_per_marriage_mean: 2.0,
+            siblings: 0,
+            descendant_generations: 1,
+            target_descendants: None,
+        };
+
+        let mut generator = IOUSGenerator::new(ruleset, config);
+        let mut rng = rand::thread_rng();
+
+        generator.generate(&mut rng);
+
+        // Count families where the IOUS is a spouse
+        // The IOUS is the first generated individual (next_indi_id starts at 1)
+        let ious_id = 1;
+        let ious_spouse_families: Vec<_> = generator
+            .generator
+            .families
+            .iter()
+            .filter(|f| f.husband_id == Some(ious_id) || f.wife_id == Some(ious_id))
+            .collect();
+
+        assert!(
+            ious_spouse_families.len() >= 2,
+            "IOUS should have at least 2 marriages (expected 3, got {})",
+            ious_spouse_families.len()
+        );
+
+        // Verify each marriage has different spouses
+        let mut spouses = std::collections::HashSet::new();
+        for family in &ious_spouse_families {
+            if let Some(husband_id) = family.husband_id {
+                if husband_id != ious_id {
+                    spouses.insert(husband_id);
+                }
+            }
+            if let Some(wife_id) = family.wife_id {
+                if wife_id != ious_id {
+                    spouses.insert(wife_id);
+                }
+            }
+        }
+
+        assert!(
+            spouses.len() >= 2,
+            "IOUS should have multiple different spouses"
+        );
+    }
+
+    #[test]
+    fn test_ious_has_children() {
+        let ruleset = Ruleset::default_english();
+        let config = IOUSConfig {
+            marriages: 2,
+            children_per_marriage_mean: 3.0,
+            siblings: 0,
+            descendant_generations: 1,
+            target_descendants: None,
+        };
+
+        let mut generator = IOUSGenerator::new(ruleset, config);
+        let mut rng = rand::thread_rng();
+
+        generator.generate(&mut rng);
+
+        // IOUS marriages should have children
+        let ious_id = 1;
+        let families_with_ious: Vec<_> = generator
+            .generator
+            .families
+            .iter()
+            .filter(|f| {
+                (f.husband_id == Some(ious_id) || f.wife_id == Some(ious_id))
+                    && !f.children_ids.is_empty()
+            })
+            .collect();
+
+        assert!(
+            !families_with_ious.is_empty(),
+            "IOUS should have at least one family with children"
+        );
+
+        // Verify children have parent_family_id set correctly
+        for family in families_with_ious {
+            for child_id in &family.children_ids {
+                let child = generator.generator.individuals.get(child_id).unwrap();
+                assert_eq!(
+                    child.parent_family_id,
+                    Some(family.id),
+                    "Child should reference parent family"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_ious_descendant_generations() {
+        let ruleset = Ruleset::default_english();
+        let config = IOUSConfig {
+            marriages: 2,
+            children_per_marriage_mean: 2.0,
+            siblings: 0,
+            descendant_generations: 3,
+            target_descendants: None,
+        };
+
+        let mut generator = IOUSGenerator::new(ruleset, config);
+        let mut rng = rand::thread_rng();
+
+        generator.generate(&mut rng);
+
+        // With 3 generations and 2 children per marriage on average,
+        // we should have multiple levels
+        let total_families = generator.generator.families.len();
+        assert!(
+            total_families >= 3,
+            "With 3 descendant generations, should have multiple families (got {})",
+            total_families
+        );
+
+        // Check that some children become parents
+        let mut children_who_are_parents = 0;
+        for individual in generator.generator.individuals.values() {
+            if !individual.spouse_family_ids.is_empty() && individual.parent_family_id.is_some() {
+                children_who_are_parents += 1;
+            }
+        }
+
+        assert!(
+            children_who_are_parents > 0,
+            "Some children should become parents (descendant generations)"
+        );
+    }
+
+    #[test]
+    fn test_ious_target_limit_respected() {
+        let ruleset = Ruleset::default_english();
+        let config = IOUSConfig {
+            marriages: 5,
+            children_per_marriage_mean: 10.0,
+            siblings: 10,
+            descendant_generations: 5,
+            target_descendants: Some(30),
+        };
+
+        let mut generator = IOUSGenerator::new(ruleset, config);
+        let mut rng = rand::thread_rng();
+
+        let count = generator.generate(&mut rng);
+
+        assert!(
+            count <= 30,
+            "Generated count should respect target limit (got {})",
+            count
+        );
+        assert!(
+            generator.generator.individuals.len() <= 30,
+            "Individual count should respect target limit"
+        );
+    }
+
+    #[test]
+    fn test_ious_marriage_dates_sequential() {
+        let ruleset = Ruleset::default_english();
+        let config = IOUSConfig {
+            marriages: 2,
+            children_per_marriage_mean: 2.0,
+            siblings: 0,
+            descendant_generations: 1,
+            target_descendants: None,
+        };
+
+        let mut generator = IOUSGenerator::new(ruleset, config);
+        let mut rng = rand::thread_rng();
+
+        generator.generate(&mut rng);
+
+        // Get IOUS marriages and check dates are ordered
+        let ious_id = 1;
+        let mut marriage_dates: Vec<_> = generator
+            .generator
+            .families
+            .iter()
+            .filter(|f| f.husband_id == Some(ious_id) || f.wife_id == Some(ious_id))
+            .filter_map(|f| f.marriage_date)
+            .collect();
+
+        marriage_dates.sort();
+
+        // Dates should be different (subsequent marriages happen later)
+        if marriage_dates.len() >= 2 {
+            assert_ne!(
+                marriage_dates[0], marriage_dates[1],
+                "Multiple marriages should have different dates"
+            );
+        }
+    }
+
+    #[test]
+    fn test_ious_children_have_birth_dates() {
+        let ruleset = Ruleset::default_english();
+        let config = IOUSConfig {
+            marriages: 1,
+            children_per_marriage_mean: 3.0,
+            siblings: 0,
+            descendant_generations: 1,
+            target_descendants: None,
+        };
+
+        let mut generator = IOUSGenerator::new(ruleset, config);
+        let mut rng = rand::thread_rng();
+
+        generator.generate(&mut rng);
+
+        // Find children (individuals with parent_family_id)
+        let children: Vec<_> = generator
+            .generator
+            .individuals
+            .values()
+            .filter(|i| i.parent_family_id.is_some())
+            .collect();
+
+        assert!(!children.is_empty(), "Should have generated children");
+
+        // All children should have birth dates (chrono::NaiveDate is always valid)
+        // Just verify the field exists and is reasonable
+        for child in children {
+            // Birth date should be after 1900 and before 2100
+            let year_string = child.birth_date.format("%Y").to_string();
+            let year: i32 = year_string.parse().unwrap();
+            assert!(
+                year > 1900 && year < 2100,
+                "Child should have valid birth year: {}",
+                year
+            );
+        }
+    }
+
+    #[test]
+    fn test_ious_output_is_valid_structure() {
+        let ruleset = Ruleset::default_english();
+        let config = IOUSConfig {
+            marriages: 2,
+            children_per_marriage_mean: 2.0,
+            siblings: 2,
+            descendant_generations: 2,
+            target_descendants: Some(30),
+        };
+
+        let mut ious_generator = IOUSGenerator::new(ruleset, config);
+        let mut rng = rand::thread_rng();
+
+        ious_generator.generate(&mut rng);
+
+        let generator = ious_generator.into_generator();
+
+        // Verify basic structure validity
+        assert!(!generator.individuals.is_empty(), "Should have individuals");
+        assert!(!generator.families.is_empty(), "Should have families");
+
+        // Verify all family references are valid
+        for family in &generator.families {
+            if let Some(husband_id) = family.husband_id {
+                assert!(
+                    generator.individuals.contains_key(&husband_id),
+                    "Husband reference should be valid"
+                );
+            }
+            if let Some(wife_id) = family.wife_id {
+                assert!(
+                    generator.individuals.contains_key(&wife_id),
+                    "Wife reference should be valid"
+                );
+            }
+            for child_id in &family.children_ids {
+                assert!(
+                    generator.individuals.contains_key(child_id),
+                    "Child reference should be valid"
+                );
+            }
+        }
+
+        // Verify individual family references are valid
+        for individual in generator.individuals.values() {
+            if let Some(parent_family_id) = individual.parent_family_id {
+                assert!(
+                    generator.families.iter().any(|f| f.id == parent_family_id),
+                    "Parent family reference should be valid"
+                );
+            }
+            for spouse_family_id in &individual.spouse_family_ids {
+                assert!(
+                    generator.families.iter().any(|f| f.id == *spouse_family_id),
+                    "Spouse family reference should be valid"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_ious_minimal_config() {
+        let ruleset = Ruleset::default_english();
+        let config = IOUSConfig {
+            marriages: 1,
+            children_per_marriage_mean: 1.0,
+            siblings: 0,
+            descendant_generations: 1,
+            target_descendants: None,
+        };
+
+        let mut generator = IOUSGenerator::new(ruleset, config);
+        let mut rng = rand::thread_rng();
+
+        let count = generator.generate(&mut rng);
+
+        // Should generate at least IOUS + spouse + 1 child
+        assert!(count >= 3, "Should generate at least 3 individuals");
+    }
+
+    #[test]
+    fn test_ious_zero_siblings() {
+        let ruleset = Ruleset::default_english();
+        let config = IOUSConfig {
+            marriages: 1,
+            children_per_marriage_mean: 2.0,
+            siblings: 0,
+            descendant_generations: 1,
+            target_descendants: None,
+        };
+
+        let mut generator = IOUSGenerator::new(ruleset, config);
+        let mut rng = rand::thread_rng();
+
+        generator.generate(&mut rng);
+
+        // Count individuals in IOUS parent family
+        // Should be exactly 1 (just IOUS)
+        let ious_id = 1;
+        let ious = generator.generator.individuals.get(&ious_id).unwrap();
+
+        if let Some(parent_family_id) = ious.parent_family_id {
+            let parent_family = generator
+                .generator
+                .families
+                .iter()
+                .find(|f| f.id == parent_family_id)
+                .unwrap();
+
+            assert_eq!(
+                parent_family.children_ids.len(),
+                1,
+                "With 0 siblings, parent family should have only IOUS"
+            );
+        }
+    }
 }
