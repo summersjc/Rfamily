@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Rfamily is a high-performance Rust CLI tool that generates GEDCOM (genealogy) files with millions of people records. It supports 51 language presets with culturally appropriate names, locations, and demographics. The tool is distributed as a single self-contained binary (~1.5 MB) with all presets embedded at compile time.
+Rfamily is a high-performance Rust CLI tool that generates and parses GEDCOM (genealogy) files with millions of people records. It supports 51 language presets with culturally appropriate names, locations, and demographics. The tool includes a full GEDCOM 5.5.1 parser and an IOUS (Individual of Unusual Size) generator for creating highly connected family trees. Distributed as a single self-contained binary (~1.5 MB) with all presets embedded at compile time.
 
 ## Essential Commands
 
@@ -21,15 +21,18 @@ cargo build --release
 
 ### Testing
 ```bash
-# Run all tests (135 total: 91 unit + 44 integration)
+# Run all tests (167 total: 109 unit + 47 integration + 11 parser/generator)
 cargo test
 
-# Run specific test module
+# Run specific test modules
 cargo test --test integration_tests
 cargo test --test error_scenario_tests
+cargo test --test parser_integration_test
 
 # Run tests in a specific source file
 cargo test --lib generator
+cargo test --lib gedcom
+cargo test --lib generators
 ```
 
 ### Code Quality
@@ -98,9 +101,34 @@ cargo run --release -- --preset japanese -c 100000 -o output.ged
 - Returns parsed `Ruleset` objects
 - Enables single-binary distribution with no external file dependencies
 
+**src/gedcom/** (NEW)
+- **parser.rs**: Full GEDCOM 5.5.1 parser with two-pass parsing algorithm
+  - First pass: Parses lines into structured GedcomLine objects
+  - Second pass: Builds GedcomFile with individuals and families
+  - Supports CONC/CONT continuation lines
+  - Handles strict and lenient parsing modes
+  - Collects warnings for unknown tags
+- **types.rs**: Data structures for parsed GEDCOM data
+  - GedcomFile, ParsedIndividual, ParsedFamily
+  - Header, GedcomLine, ParseMode, GedcomVersion
+- **error.rs**: Comprehensive error handling
+  - ParseError with 10 error variants (InvalidLineFormat, InvalidLevel, MissingRequiredTag, InvalidXref, BrokenXref, InvalidDate, InvalidEncoding, IoError, Utf8Error, Other)
+  - ParseWarning for non-fatal issues
+- **mod.rs**: Module exports and re-exports
+
+**src/generators/** (NEW)
+- **ious.rs**: IOUS (Individual of Unusual Size) generator
+  - Creates highly connected individuals with multiple marriages
+  - Generates siblings for the central IOUS individual
+  - Creates multi-generational descendant trees recursively
+  - Configurable: marriages, children per marriage, siblings, generations, total descendants
+  - Uses Poisson distribution for realistic family sizes
+  - Respects target limits to control output size
+- **mod.rs**: Module exports
+
 **src/lib.rs**
 - Library interface exposing public API for testing
-- Re-exports generator, ruleset, and preset_registry modules
+- Re-exports generator, ruleset, preset_registry, gedcom, and generators modules
 
 ### Data Flow
 
@@ -120,6 +148,10 @@ cargo run --release -- --preset japanese -c 100000 -o output.ged
 
 **Statistical Realism**: Uses `rand_distr` for normal and Poisson distributions to generate realistic demographic data (ages, children counts, etc.).
 
+**Two-Pass Parsing**: GEDCOM parser uses a two-pass algorithm - first pass parses raw lines, second pass builds semantic structures. This allows for clean separation of syntax and semantics while handling continuation lines (CONC/CONT) efficiently.
+
+**Error Recovery**: Parser supports both strict and lenient modes - strict mode fails fast on errors, lenient mode collects warnings and continues parsing, making it suitable for real-world GEDCOM files with quirks.
+
 ## Adding New Language Presets
 
 1. Create JSON file in `presets/` directory following existing format
@@ -133,15 +165,21 @@ cargo run --release -- --preset japanese -c 100000 -o output.ged
 
 ## Testing Strategy
 
-**Unit Tests** (91 tests):
+**Unit Tests** (109 tests):
 - Located in `#[cfg(test)]` modules within each source file
 - Test individual functions and edge cases
+- **Generator tests** (84): name generation, date calculations, GEDCOM formatting
+- **GEDCOM Parser tests** (25): line parsing, family records, CONC/CONT, error handling, strict/lenient modes
+- **IOUS Generator tests** (13): sibling generation, multiple marriages, descendant recursion, reference integrity
 - Examples: name generation, date calculations, GEDCOM formatting
 
-**Integration Tests** (44 tests):
-- `tests/integration_tests.rs`: CLI workflows with various presets
-- `tests/error_scenario_tests.rs`: Error handling and edge cases
+**Integration Tests** (47 tests):
+- `tests/integration_tests.rs` (19): CLI workflows with various presets, IOUS command testing
+- `tests/error_scenario_tests.rs` (28): Error handling and edge cases
 - Test full end-to-end generation with file output validation
+
+**Parser Integration Tests** (3 tests):
+- `tests/parser_integration_test.rs`: Round-trip generate→parse→verify, multi-generation GEDCOM parsing
 
 **CI/CD**: GitHub Actions workflow (`.github/workflows/rust.yml`) runs tests, fmt, and clippy on every push.
 

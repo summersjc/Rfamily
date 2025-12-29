@@ -3,8 +3,8 @@
 [![Rust CI](https://github.com/summersjc/Rfamily/actions/workflows/rust.yml/badge.svg)](https://github.com/summersjc/Rfamily/actions/workflows/rust.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust Version](https://img.shields.io/badge/rust-1.70%2B-blue.svg)](https://www.rust-lang.org)
-[![Test Coverage](https://img.shields.io/badge/coverage-81.5%25-brightgreen.svg)](https://github.com/summersjc/Rfamily)
-[![Tests](https://img.shields.io/badge/tests-143_passing-brightgreen.svg)](https://github.com/summersjc/Rfamily)
+[![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](https://github.com/summersjc/Rfamily)
+[![Tests](https://img.shields.io/badge/tests-167_passing-brightgreen.svg)](https://github.com/summersjc/Rfamily)
 
 A high-performance Rust tool for generating GEDCOM files with millions of people records using customizable rulesets.
 
@@ -23,6 +23,8 @@ See [INSTALL.md](INSTALL.md) for detailed installation instructions for all plat
 - **Ruleset-Based Generation**: Define custom rules for names, dates, locations, relationships, and LDS ordinances
 - **Fast Generation**: Optimized for creating millions of records efficiently
 - **Family Relationships**: Generate realistic multi-generational families with marriages, divorces, and children
+- **GEDCOM Parser**: Parse and validate existing GEDCOM 5.5.1 files with strict/lenient modes
+- **IOUS Generator**: Create "Individuals of Unusual Size" - highly connected people with multiple marriages and extensive descendants
 - **Unicode Support**: Full UTF-8 support for non-Latin scripts (Arabic, Chinese, Japanese, Korean, etc.)
 - **LDS Ordinances**: Optional support for baptism, endowment, sealing, and other LDS temple ordinances
 - **Streaming Output**: Writes directly to file without loading everything into memory
@@ -156,6 +158,86 @@ cargo run --release -- --count 100000 --output family.ged
 ```bash
 cargo run --release -- --preset lds --count 50000 --output lds-family.ged
 ```
+
+### Generate IOUS (Individual of Unusual Size)
+
+Create highly connected individuals with multiple marriages and extensive descendants:
+
+```bash
+# Generate IOUS with default settings (3 marriages, 5 siblings, 5 generations)
+rfamily generate-ious --preset english --output ious.ged
+
+# Customize IOUS generation
+rfamily generate-ious \
+  --preset japanese \
+  --output ious-japan.ged \
+  --marriages 4 \
+  --children-per-marriage 3.5 \
+  --siblings 6 \
+  --descendant-gens 4 \
+  --total-descendants 500
+
+# Minimal IOUS (1 marriage, no siblings, 2 generations)
+rfamily generate-ious \
+  --preset spanish \
+  --output ious-minimal.ged \
+  --marriages 1 \
+  --children-per-marriage 2.0 \
+  --siblings 0 \
+  --descendant-gens 2
+```
+
+**IOUS Parameters:**
+- `--marriages`: Number of marriages (1-10, default: 3)
+- `--children-per-marriage`: Mean children per marriage (0-15, default: 4.0)
+- `--siblings`: Number of siblings for IOUS (0-20, default: 5)
+- `--descendant-gens`: Generations of descendants (1-10, default: 5)
+- `--total-descendants`: Optional limit on total individuals
+
+### Parse GEDCOM Files
+
+Use the library API to parse existing GEDCOM files:
+
+```rust
+use rfamily_core::gedcom::{GedcomParser, ParseMode};
+
+// Parse in lenient mode (accepts real-world GEDCOM quirks)
+let mut parser = GedcomParser::new(ParseMode::Lenient);
+let gedcom = parser.parse_file("family.ged")?;
+
+println!("Parsed {} individuals", gedcom.individuals.len());
+println!("Parsed {} families", gedcom.families.len());
+
+// Access parsed data
+for (xref, individual) in &gedcom.individuals {
+    println!("{}: {}", xref, individual.name.as_ref().unwrap());
+}
+
+// Check for warnings
+for warning in parser.warnings() {
+    println!("Warning: {}", warning);
+}
+```
+
+## Examples
+
+Three working examples are provided in `rfamily-core/examples/`:
+
+```bash
+# Example 1: Parse an existing GEDCOM file
+cargo run -p rfamily-core --example parse_gedcom -- path/to/file.ged
+
+# Example 2: Generate an IOUS (Individual of Unusual Size)
+cargo run -p rfamily-core --example generate_ious
+
+# Example 3: Round-trip test (generate → parse → verify)
+cargo run -p rfamily-core --example round_trip
+```
+
+**Example Output:**
+- `parse_gedcom`: Parses GEDCOM files, shows individuals/families, validates references
+- `generate_ious`: Creates a 200-person IOUS family tree with 3 marriages, 5 siblings, 4 generations
+- `round_trip`: Generates 100 individuals, parses them back, verifies data integrity
 
 ## Available Language Presets
 
