@@ -59,15 +59,152 @@ impl GedcomGenerator {
         if self.ruleset.relationships.generate_families {
             self.generate_families(count, rng);
         } else {
-            self.generate_individuals(count, rng);
+            // Use parallel generation for better performance
+            self.generate_individuals_parallel(count);
         }
     }
 
+    #[allow(dead_code)]
     fn generate_individuals(&mut self, count: usize, rng: &mut impl Rng) {
         for _ in 0..count {
             let individual = self.create_individual(None, None, rng);
             self.individuals.insert(individual.id, individual);
         }
+    }
+
+    fn generate_individuals_parallel(&mut self, count: usize) {
+        use rayon::prelude::*;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::Arc;
+
+        let id_counter = AtomicUsize::new(self.next_indi_id);
+        let ruleset = Arc::new(self.ruleset.clone());
+
+        // Generate in parallel
+        let individuals: Vec<Individual> = (0..count)
+            .into_par_iter()
+            .map(|_| {
+                let id = id_counter.fetch_add(1, Ordering::Relaxed);
+                let mut rng = rand::thread_rng();
+                Self::create_individual_static(id, None, None, &ruleset, &mut rng)
+            })
+            .collect();
+
+        // Insert into HashMap (sequential, but fast)
+        for indi in individuals {
+            self.individuals.insert(indi.id, indi);
+        }
+
+        self.next_indi_id = id_counter.load(Ordering::Relaxed);
+    }
+
+    // Static method for parallel individual creation
+    fn create_individual_static(
+        id: usize,
+        _father_id: Option<usize>,
+        _mother_id: Option<usize>,
+        ruleset: &Ruleset,
+        rng: &mut impl Rng,
+    ) -> Individual {
+        let sex = if rng.gen_bool(ruleset.demographics.sex_ratio) {
+            Sex::Male
+        } else {
+            Sex::Female
+        };
+
+        let given_name = Self::select_given_name_static(&sex, ruleset, rng);
+        let surname = Self::select_surname_static(ruleset, rng);
+        let birth_date = Self::generate_birth_date_static(ruleset, rng);
+        let birth_place = Self::select_location_static(ruleset, rng);
+        let language = Self::select_language_static(ruleset, rng);
+
+        let death_date = if ruleset.dates.include_death_dates {
+            Self::generate_death_date_static(birth_date, ruleset, rng)
+        } else {
+            None
+        };
+
+        let death_place = death_date.map(|_| Self::select_location_static(ruleset, rng));
+
+        Individual {
+            id,
+            given_name,
+            surname,
+            sex,
+            birth_date,
+            birth_place,
+            death_date,
+            death_place,
+            language,
+            parent_family_id: None,
+            spouse_family_ids: Vec::new(),
+        }
+    }
+
+    fn select_given_name_static(sex: &Sex, ruleset: &Ruleset, rng: &mut impl Rng) -> String {
+        let names = match sex {
+            Sex::Male => &ruleset.names.male_given_names,
+            Sex::Female => &ruleset.names.female_given_names,
+        };
+        names[rng.gen_range(0..names.len())].clone()
+    }
+
+    fn select_surname_static(ruleset: &Ruleset, rng: &mut impl Rng) -> String {
+        if !ruleset.names.surnames.is_empty() {
+            ruleset.names.surnames[rng.gen_range(0..ruleset.names.surnames.len())].clone()
+        } else {
+            "Unknown".to_string()
+        }
+    }
+
+    fn select_location_static(ruleset: &Ruleset, rng: &mut impl Rng) -> String {
+        let country = &ruleset.locations.countries[0];
+        if country.cities.is_empty() {
+            country.name.clone()
+        } else {
+            format!(
+                "{}, {}",
+                country.cities[rng.gen_range(0..country.cities.len())],
+                country.name
+            )
+        }
+    }
+
+    fn select_language_static(ruleset: &Ruleset, rng: &mut impl Rng) -> String {
+        ruleset.demographics.languages[rng.gen_range(0..ruleset.demographics.languages.len())]
+            .clone()
+    }
+
+    fn generate_birth_date_static(ruleset: &Ruleset, rng: &mut impl Rng) -> NaiveDate {
+        let year = rng.gen_range(ruleset.dates.birth_year_start..=ruleset.dates.birth_year_end);
+        let month = rng.gen_range(1..=12);
+        let day = rng.gen_range(1..=28);
+        NaiveDate::from_ymd_opt(year, month, day).unwrap()
+    }
+
+    fn generate_death_date_static(
+        birth_date: NaiveDate,
+        ruleset: &Ruleset,
+        rng: &mut impl Rng,
+    ) -> Option<NaiveDate> {
+        use rand_distr::{Distribution, Normal};
+
+        let normal = Normal::new(
+            ruleset.dates.life_expectancy_mean as f64,
+            ruleset.dates.life_expectancy_mean as f64 / 6.0,
+        )
+        .unwrap();
+
+        let age = normal.sample(rng).clamp(0.0, 120.0);
+        let death_year = birth_date.year() + age as i32;
+
+        if death_year > 2024 {
+            return None;
+        }
+
+        let month = rng.gen_range(1..=12);
+        let day = rng.gen_range(1..=28);
+        NaiveDate::from_ymd_opt(death_year, month, day)
     }
 
     fn generate_families(&mut self, target_count: usize, rng: &mut impl Rng) {

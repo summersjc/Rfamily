@@ -11,6 +11,10 @@ serde_json.workspace = true
 chrono.workspace = true
 rand.workspace = true
 rand_distr.workspace = true
+rayon = "1.10"
+flate2 = "1.0"
+crossbeam = "0.8"
+parking_lot = "0.12"
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
