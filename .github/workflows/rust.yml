@@ -41,6 +41,19 @@ jobs:
     - name: Run clippy
       run: cargo clippy -- -D warnings
 
+  performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+    - name: Run performance tests
+      run: cargo test -p rfamily-core --test performance_tests --release -- --test-threads=1 --nocapture
+    - name: Run quick benchmarks (parser)
+      run: cargo bench -p rfamily-core --bench parser_bench -- --sample-size 10 --warm-up-time 1 --measurement-time 3
+    - name: Run quick benchmarks (generator)
+      run: cargo bench -p rfamily-core --bench generator_bench -- --sample-size 10 --warm-up-time 1 --measurement-time 3
+
   security:
     name: Security Audit
     runs-on: ubuntu-latest

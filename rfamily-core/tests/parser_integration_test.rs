@@ -29,7 +29,7 @@ fn test_parse_generated_gedcom() {
     println!("  Encoding: {}", gedcom.header.encoding);
 
     // Verify we parsed some individuals
-    assert!(gedcom.individuals.len() > 0, "No individuals parsed");
+    assert!(!gedcom.individuals.is_empty(), "No individuals parsed");
 
     // Check that individuals have expected fields
     for (xref, individual) in &gedcom.individuals {
@@ -94,7 +94,7 @@ fn test_round_trip_generate_and_parse() {
 
     // Verify basic structure
     assert!(
-        gedcom.individuals.len() > 0,
+        !gedcom.individuals.is_empty(),
         "Parsed file should have individuals"
     );
     assert_eq!(
@@ -103,7 +103,7 @@ fn test_round_trip_generate_and_parse() {
     );
 
     // Verify all xref formats are correct
-    for (xref, _) in &gedcom.individuals {
+    for xref in gedcom.individuals.keys() {
         assert!(
             xref.starts_with("@I"),
             "Individual xref should start with @I"
@@ -111,13 +111,13 @@ fn test_round_trip_generate_and_parse() {
         assert!(xref.ends_with("@"), "Individual xref should end with @");
     }
 
-    for (xref, _) in &gedcom.families {
+    for xref in gedcom.families.keys() {
         assert!(xref.starts_with("@F"), "Family xref should start with @F");
         assert!(xref.ends_with("@"), "Family xref should end with @");
     }
 
     // Verify family relationships are consistent
-    for (_xref, family) in &gedcom.families {
+    for family in gedcom.families.values() {
         // Check husband exists
         if let Some(ref husband_xref) = family.husband_xref {
             assert!(

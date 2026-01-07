@@ -736,7 +736,7 @@ mod tests {
         let _result = parser.parse_reader(BufReader::new(cursor)).unwrap();
 
         assert!(
-            parser.warnings().len() > 0,
+            !parser.warnings().is_empty(),
             "Should collect warnings for unknown tags"
         );
     }

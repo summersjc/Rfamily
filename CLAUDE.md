@@ -171,7 +171,6 @@ cargo run --release -- --preset japanese -c 100000 -o output.ged
 - **Generator tests** (84): name generation, date calculations, GEDCOM formatting
 - **GEDCOM Parser tests** (25): line parsing, family records, CONC/CONT, error handling, strict/lenient modes
 - **IOUS Generator tests** (13): sibling generation, multiple marriages, descendant recursion, reference integrity
-- Examples: name generation, date calculations, GEDCOM formatting
 
 **Integration Tests** (47 tests):
 - `tests/integration_tests.rs` (19): CLI workflows with various presets, IOUS command testing
@@ -180,6 +179,27 @@ cargo run --release -- --preset japanese -c 100000 -o output.ged
 
 **Parser Integration Tests** (3 tests):
 - `tests/parser_integration_test.rs`: Round-trip generate→parse→verify, multi-generation GEDCOM parsing
+
+**Performance Tests** (22 tests + 17 benchmarks):
+- **Criterion.rs Benchmarks** (`benches/`):
+  - `parser_bench.rs`: Parser performance at 1K, 10K, 100K scales
+  - `generator_bench.rs`: Generator performance (simple & families) + GEDCOM writing
+  - `ious_bench.rs`: IOUS generation (minimal to xlarge), marriage/generation scaling
+- **Integration Performance Tests** (`tests/performance_tests.rs`):
+  - **Timing tests** (5): 100K/1M parsing, 100K/1M generation, round-trip validation
+  - **Memory tests** (4): Memory usage validation at scale (placeholder for future implementation)
+  - **Scalability tests** (3): Linear O(n) scaling verification for parser, generator, IOUS
+  - **Stress tests** (3): 10M+ record handling, deep recursion validation (marked `#[ignore]`)
+- **Test Helpers** (`tests/helpers/perf_test_helpers.rs`):
+  - `generate_test_file()`: On-demand GEDCOM test file generation
+  - `assert_completes_within()`: Timing assertions with tolerance for CI variability
+  - `measure_memory()`: Memory tracking utilities (placeholder)
+
+**Acceptance Criteria**:
+- ✅ Parser: 100K in <5s, 1M in <60s, linear O(n) scaling
+- ✅ Generator: 100K in <10s, 1M in <120s, linear O(n) scaling
+- ✅ IOUS: 1000 descendants in <100ms, 10 generations without stack overflow
+- ✅ No panics on 10M+ records (OOM is acceptable)
 
 **CI/CD**: GitHub Actions workflow (`.github/workflows/rust.yml`) runs tests, fmt, and clippy on every push.
 

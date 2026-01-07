@@ -73,7 +73,7 @@ impl GedcomGenerator {
     fn generate_families(&mut self, target_count: usize, rng: &mut impl Rng) {
         // Generate founding generation
         let founding_couples = (target_count as f64
-            / (self.ruleset.relationships.generations as f64 * 3.0))
+            / (self.ruleset.relationships.generations as f64 * 2.0))
             .ceil() as usize;
 
         for _ in 0..founding_couples {

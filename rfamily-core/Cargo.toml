@@ -12,6 +12,21 @@ chrono.workspace = true
 rand.workspace = true
 rand_distr.workspace = true
 
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
 [lib]
 name = "rfamily_core"
 path = "src/lib.rs"
+
+[[bench]]
+name = "parser_bench"
+harness = false
+
+[[bench]]
+name = "generator_bench"
+harness = false
+
+[[bench]]
+name = "ious_bench"
+harness = false

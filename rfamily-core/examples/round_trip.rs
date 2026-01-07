@@ -51,14 +51,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut errors = 0;
 
     // Verify xref formats
-    for (xref, _) in &gedcom.individuals {
+    for xref in gedcom.individuals.keys() {
         if !xref.starts_with("@I") || !xref.ends_with("@") {
             println!("✗ Invalid individual xref: {}", xref);
             errors += 1;
         }
     }
 
-    for (xref, _) in &gedcom.families {
+    for xref in gedcom.families.keys() {
         if !xref.starts_with("@F") || !xref.ends_with("@") {
             println!("✗ Invalid family xref: {}", xref);
             errors += 1;
@@ -128,11 +128,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         100.0 * individuals_with_both_roles as f64 / gedcom.individuals.len() as f64
     );
 
-    if gedcom.families.len() > 0 {
+    if !gedcom.families.is_empty() {
         let avg_children: f64 = gedcom
             .families
-            .iter()
-            .map(|(_, f)| f.children_xrefs.len())
+            .values()
+            .map(|f| f.children_xrefs.len())
             .sum::<usize>() as f64
             / gedcom.families.len() as f64;
         println!("Average children per family: {:.2}", avg_children);
