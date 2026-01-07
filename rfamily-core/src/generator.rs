@@ -2,7 +2,7 @@ use crate::ruleset::*;
 use chrono::{Datelike, NaiveDate};
 use rand::Rng;
 use std::collections::HashMap;
-use std::io::{BufWriter, Write};
+use std::io::Write;
 
 pub struct GedcomGenerator {
     pub(crate) ruleset: Ruleset,
@@ -550,7 +550,7 @@ impl GedcomGenerator {
         &self.families
     }
 
-    pub fn write_gedcom<W: Write>(&self, writer: &mut BufWriter<W>) -> std::io::Result<()> {
+    pub fn write_gedcom<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
         self.write_header(writer)?;
 
         // Iterate over HashMap values
@@ -566,7 +566,58 @@ impl GedcomGenerator {
         Ok(())
     }
 
-    fn write_header<W: Write>(&self, writer: &mut BufWriter<W>) -> std::io::Result<()> {
+    /// Generate individuals in streaming mode (memory-efficient for large datasets)
+    /// Generates in batches, writes immediately, and calls progress callback
+    pub fn generate_streaming<W: Write, F>(
+        &mut self,
+        count: usize,
+        writer: &mut W,
+        mut progress_callback: F,
+    ) -> std::io::Result<()>
+    where
+        F: FnMut(usize),
+    {
+        use rayon::prelude::*;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::Arc;
+
+        const BATCH_SIZE: usize = 10000;
+
+        self.write_header(writer)?;
+
+        let id_counter = AtomicUsize::new(self.next_indi_id);
+        let ruleset = Arc::new(self.ruleset.clone());
+
+        for batch_start in (0..count).step_by(BATCH_SIZE) {
+            let batch_end = (batch_start + BATCH_SIZE).min(count);
+            let batch_count = batch_end - batch_start;
+
+            // Generate batch in parallel
+            let batch_individuals: Vec<Individual> = (0..batch_count)
+                .into_par_iter()
+                .map(|_| {
+                    let id = id_counter.fetch_add(1, Ordering::Relaxed);
+                    let mut rng = rand::thread_rng();
+                    Self::create_individual_static(id, None, None, &ruleset, &mut rng)
+                })
+                .collect();
+
+            // Write batch immediately (sequential, but streaming to disk)
+            for indi in &batch_individuals {
+                self.write_individual(writer, indi)?;
+            }
+
+            // Batch is dropped here, freeing memory
+            progress_callback(batch_end);
+        }
+
+        self.write_trailer(writer)?;
+        self.next_indi_id = id_counter.load(Ordering::Relaxed);
+
+        Ok(())
+    }
+
+    fn write_header<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
         writeln!(writer, "0 HEAD")?;
         writeln!(writer, "1 SOUR Rfamily")?;
         writeln!(writer, "2 VERS 0.2.0")?;
@@ -589,11 +640,7 @@ impl GedcomGenerator {
         Ok(())
     }
 
-    fn write_individual<W: Write>(
-        &self,
-        writer: &mut BufWriter<W>,
-        indi: &Individual,
-    ) -> std::io::Result<()> {
+    fn write_individual<W: Write>(&self, writer: &mut W, indi: &Individual) -> std::io::Result<()> {
         writeln!(writer, "0 @I{}@ INDI", indi.id)?;
         writeln!(writer, "1 NAME {} /{}/", indi.given_name, indi.surname)?;
         writeln!(writer, "2 GIVN {}", indi.given_name)?;
@@ -642,7 +689,7 @@ impl GedcomGenerator {
 
     fn write_baptism<W: Write>(
         &self,
-        writer: &mut BufWriter<W>,
+        writer: &mut W,
         indi: &Individual,
         rng: &mut impl Rng,
     ) -> std::io::Result<()> {
@@ -658,7 +705,7 @@ impl GedcomGenerator {
 
     fn write_endowment<W: Write>(
         &self,
-        writer: &mut BufWriter<W>,
+        writer: &mut W,
         indi: &Individual,
         rng: &mut impl Rng,
     ) -> std::io::Result<()> {
@@ -672,11 +719,7 @@ impl GedcomGenerator {
         Ok(())
     }
 
-    fn write_family<W: Write>(
-        &self,
-        writer: &mut BufWriter<W>,
-        fam: &Family,
-    ) -> std::io::Result<()> {
+    fn write_family<W: Write>(&self, writer: &mut W, fam: &Family) -> std::io::Result<()> {
         writeln!(writer, "0 @F{}@ FAM", fam.id)?;
 
         if let Some(husband_id) = fam.husband_id {
@@ -706,7 +749,7 @@ impl GedcomGenerator {
         Ok(())
     }
 
-    fn write_trailer<W: Write>(&self, writer: &mut BufWriter<W>) -> std::io::Result<()> {
+    fn write_trailer<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
         writeln!(writer, "0 TRLR")?;
         Ok(())
     }
@@ -1427,6 +1470,60 @@ mod tests {
             25,
             "Should generate exactly 25 individuals"
         );
+    }
+
+    #[test]
+    fn test_parallel_generation_produces_correct_count() {
+        let mut ruleset = Ruleset::default_english();
+        ruleset.relationships.generate_families = false;
+
+        let mut generator = GedcomGenerator::new(ruleset);
+        let mut rng = rand::thread_rng();
+
+        generator.generate(1000, &mut rng);
+
+        assert_eq!(
+            generator.individuals.len(),
+            1000,
+            "Parallel generation should produce exactly 1000 individuals"
+        );
+    }
+
+    #[test]
+    fn test_parallel_generation_unique_ids() {
+        let mut ruleset = Ruleset::default_english();
+        ruleset.relationships.generate_families = false;
+
+        let mut generator = GedcomGenerator::new(ruleset);
+        let mut rng = rand::thread_rng();
+
+        generator.generate(500, &mut rng);
+
+        // Check all IDs are unique
+        let mut ids: Vec<usize> = generator.individuals.keys().copied().collect();
+        ids.sort();
+
+        for i in 0..ids.len() - 1 {
+            assert_ne!(ids[i], ids[i + 1], "All IDs should be unique");
+        }
+    }
+
+    #[test]
+    fn test_parallel_generation_sequential_ids() {
+        let mut ruleset = Ruleset::default_english();
+        ruleset.relationships.generate_families = false;
+
+        let mut generator = GedcomGenerator::new(ruleset);
+        let mut rng = rand::thread_rng();
+
+        generator.generate(100, &mut rng);
+
+        // IDs should be sequential from 1 to 100
+        let mut ids: Vec<usize> = generator.individuals.keys().copied().collect();
+        ids.sort();
+
+        assert_eq!(ids[0], 1, "First ID should be 1");
+        assert_eq!(ids[ids.len() - 1], 100, "Last ID should be 100");
     }
 
     #[test]

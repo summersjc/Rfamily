@@ -1,3 +1,4 @@
+pub mod compression;
 pub mod gedcom;
 pub mod generator;
 pub mod generators;

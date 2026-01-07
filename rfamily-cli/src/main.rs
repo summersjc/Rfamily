@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 use indicatif::{ProgressBar, ProgressStyle};
+use rfamily_core::compression::{adjust_filename_for_compression, OutputWriter};
 use rfamily_core::generator::GedcomGenerator;
 use rfamily_core::generators::ious::{IOUSConfig, IOUSGenerator};
 use rfamily_core::preset_registry::PresetRegistry;
@@ -80,6 +81,14 @@ enum Commands {
         /// Override number of generations (1-10)
         #[arg(short = 'g', long)]
         generations: Option<usize>,
+
+        /// Compress output with gzip (adds .gz extension)
+        #[arg(long)]
+        compress: bool,
+
+        /// Use streaming generation (memory-efficient for 1M+ records)
+        #[arg(long)]
+        streaming: bool,
     },
 
     /// Generate IOUS (Individual of Unusual Size) tree
@@ -199,7 +208,18 @@ fn main() -> std::io::Result<()> {
             preset,
             ruleset,
             generations,
-        }) => handle_generate(registry, count, output, preset, ruleset, generations),
+            compress,
+            streaming,
+        }) => handle_generate(
+            registry,
+            count,
+            output,
+            preset,
+            ruleset,
+            generations,
+            compress,
+            streaming,
+        ),
         Some(Commands::GenerateIous {
             output,
             preset,
@@ -230,7 +250,16 @@ fn main() -> std::io::Result<()> {
             let preset = determine_preset_name_legacy(&cli);
             let ruleset = cli.ruleset.clone();
             let generations = cli.generations;
-            handle_generate(registry, count, output, preset, ruleset, generations)
+            handle_generate(
+                registry,
+                count,
+                output,
+                preset,
+                ruleset,
+                generations,
+                false,
+                false,
+            )
         }
     }
 }
@@ -242,6 +271,8 @@ fn handle_generate(
     preset: Option<String>,
     ruleset_path: Option<String>,
     generations: Option<usize>,
+    compress: bool,
+    streaming: bool,
 ) -> std::io::Result<()> {
     let mut ruleset = load_ruleset(&registry, &ruleset_path, preset);
 
@@ -255,29 +286,53 @@ fn handle_generate(
         println!("Overriding generations to: {}", gens);
     }
 
-    println!("Rfamily v0.2.0 - Generate");
-    println!("Generating {} individuals to {}", count, output);
+    // Adjust filename for compression
+    let final_output = adjust_filename_for_compression(&output, compress);
 
-    let mut rng = rand::thread_rng();
+    println!("Rfamily v0.2.0 - Generate");
+    println!("Generating {} individuals to {}", count, final_output);
+    if compress {
+        println!("Compression: enabled (gzip)");
+    }
+    if streaming {
+        println!("Mode: streaming (memory-efficient)");
+    }
+
     let mut generator = GedcomGenerator::new(ruleset);
 
-    // Progress bar setup
+    // Progress bar setup with real-time updates
     let pb = ProgressBar::new(count as u64);
     pb.set_style(
         ProgressStyle::default_bar()
-            .template("[{elapsed_precise}] {bar:40.cyan/blue} {pos}/{len} ({eta})")
+            .template("[{elapsed_precise}] {bar:40.cyan/blue} {pos}/{len} ({per_sec}, eta {eta})")
             .unwrap()
-            .progress_chars("##-"),
+            .progress_chars("█▓▒░-"),
     );
 
-    // Generate data
-    generator.generate(count, &mut rng);
-    pb.finish_with_message("Generation complete");
+    // Choose generation mode
+    if streaming || count >= 500_000 {
+        // Use streaming mode for large datasets or when explicitly requested
+        let mut writer = OutputWriter::create(&final_output, compress)?;
 
-    // Write to file
-    let file = File::create(&output)?;
-    let mut writer = BufWriter::new(file);
-    generator.write_gedcom(&mut writer)?;
+        // Streaming with real-time progress updates
+        generator.generate_streaming(count, &mut writer, |current| {
+            pb.set_position(current as u64);
+        })?;
+
+        writer.finish()?;
+        pb.finish_with_message("✓ Generation complete");
+    } else {
+        // Traditional mode for smaller datasets
+        let mut rng = rand::thread_rng();
+        generator.generate(count, &mut rng);
+        pb.set_position(count as u64);
+        pb.finish_with_message("✓ Generation complete");
+
+        // Write to file
+        let mut writer = OutputWriter::create(&final_output, compress)?;
+        generator.write_gedcom(&mut writer)?;
+        writer.finish()?;
+    }
 
     println!(
         "Successfully generated GEDCOM file with {} individuals",
