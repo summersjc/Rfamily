@@ -786,6 +786,7 @@ fn month_name(month: u32) -> &'static str {
 mod tests {
     use super::*;
     use crate::ruleset::Ruleset;
+    use std::io::BufWriter;
 
     #[test]
     fn test_generator_creation() {

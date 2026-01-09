@@ -762,3 +762,255 @@ fn test_cli_generate_ious_minimal() {
 
     cleanup_file(output_file);
 }
+
+#[test]
+fn test_cli_streaming_generation() {
+    let output_file = "test_streaming.ged";
+    cleanup_file(output_file);
+
+    let output = run_rfamily(&[
+        "generate",
+        "--preset",
+        "english",
+        "--count",
+        "1000",
+        "--output",
+        output_file,
+        "--streaming",
+    ]);
+
+    assert!(
+        output.status.success(),
+        "Streaming generation should succeed"
+    );
+
+    let (valid, content) = verify_gedcom_file(output_file);
+    assert!(valid, "Streaming generated file should be valid GEDCOM");
+
+    let individual_count = count_individuals(&content);
+    assert!(
+        individual_count >= 1000,
+        "Should generate at least 1000 individuals with streaming, got {}",
+        individual_count
+    );
+
+    cleanup_file(output_file);
+}
+
+#[test]
+fn test_cli_compression() {
+    let output_file = "test_compressed.ged";
+    let compressed_file = "test_compressed.ged.gz";
+    cleanup_file(output_file);
+    cleanup_file(compressed_file);
+
+    let output = run_rfamily(&[
+        "generate",
+        "--preset",
+        "english",
+        "--count",
+        "500",
+        "--output",
+        output_file,
+        "--compress",
+    ]);
+
+    assert!(output.status.success(), "Compression should succeed");
+
+    // Compressed file should exist with .gz extension
+    assert!(
+        Path::new(compressed_file).exists(),
+        "Compressed file should exist with .gz extension"
+    );
+
+    // Verify it's a valid gzip file by decompressing it
+    let gunzip_output = Command::new("gunzip")
+        .arg("-c")
+        .arg(compressed_file)
+        .output()
+        .expect("Failed to decompress file");
+
+    assert!(
+        gunzip_output.status.success(),
+        "Should be able to decompress with gunzip"
+    );
+
+    let decompressed_content = String::from_utf8(gunzip_output.stdout).expect("Invalid UTF-8");
+
+    // Verify decompressed content is valid GEDCOM
+    assert!(
+        decompressed_content.contains("0 HEAD"),
+        "Decompressed content should have GEDCOM header"
+    );
+    assert!(
+        decompressed_content.contains("0 TRLR"),
+        "Decompressed content should have GEDCOM trailer"
+    );
+
+    let individual_count = count_individuals(&decompressed_content);
+    assert!(
+        individual_count >= 500,
+        "Decompressed file should have at least 500 individuals, got {}",
+        individual_count
+    );
+
+    // Verify compression ratio
+    let compressed_metadata =
+        fs::metadata(compressed_file).expect("Should get compressed metadata");
+    let decompressed_size = decompressed_content.len() as u64;
+    let compression_ratio = (compressed_metadata.len() as f64) / (decompressed_size as f64);
+
+    assert!(
+        compression_ratio < 0.3,
+        "Compression ratio should be less than 30%, got {:.2}%",
+        compression_ratio * 100.0
+    );
+
+    cleanup_file(output_file);
+    cleanup_file(compressed_file);
+}
+
+#[test]
+#[ignore] // Ignore by default due to long runtime (~10s)
+fn test_cli_automatic_streaming_threshold() {
+    let output_file = "test_auto_streaming.ged";
+    cleanup_file(output_file);
+
+    // Generate 500K+ records without --streaming flag
+    // Should automatically enable streaming
+    let output = run_rfamily(&[
+        "generate",
+        "--preset",
+        "english",
+        "--count",
+        "500000",
+        "--output",
+        output_file,
+    ]);
+
+    assert!(
+        output.status.success(),
+        "Automatic streaming threshold should succeed"
+    );
+
+    // Check that streaming mode was used (look for progress output)
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Should see generation messages
+    assert!(
+        stderr.contains("Generating") || stdout.contains("Generating"),
+        "Should show generation progress"
+    );
+
+    let (valid, content) = verify_gedcom_file(output_file);
+    assert!(
+        valid,
+        "Auto-streaming generated file should be valid GEDCOM"
+    );
+
+    let individual_count = count_individuals(&content);
+    assert!(
+        individual_count >= 500000,
+        "Should generate at least 500K individuals, got {}",
+        individual_count
+    );
+
+    cleanup_file(output_file);
+}
+
+#[test]
+fn test_cli_compression_with_streaming() {
+    let output_file = "test_combo.ged";
+    let compressed_file = "test_combo.ged.gz";
+    cleanup_file(output_file);
+    cleanup_file(compressed_file);
+
+    // Combine compression and streaming
+    let output = run_rfamily(&[
+        "generate",
+        "--preset",
+        "japanese",
+        "--count",
+        "2000",
+        "--output",
+        output_file,
+        "--compress",
+        "--streaming",
+    ]);
+
+    assert!(
+        output.status.success(),
+        "Compression + streaming should succeed"
+    );
+
+    // Compressed file should exist
+    assert!(
+        Path::new(compressed_file).exists(),
+        "Compressed file should exist"
+    );
+
+    // Decompress and verify
+    let gunzip_output = Command::new("gunzip")
+        .arg("-c")
+        .arg(compressed_file)
+        .output()
+        .expect("Failed to decompress file");
+
+    assert!(
+        gunzip_output.status.success(),
+        "Should be able to decompress combined output"
+    );
+
+    let decompressed_content = String::from_utf8(gunzip_output.stdout).expect("Invalid UTF-8");
+
+    let individual_count = count_individuals(&decompressed_content);
+    assert!(
+        individual_count >= 2000,
+        "Combined mode should have at least 2000 individuals, got {}",
+        individual_count
+    );
+
+    cleanup_file(output_file);
+    cleanup_file(compressed_file);
+}
+
+#[test]
+fn test_cli_streaming_with_progress() {
+    let output_file = "test_streaming_progress.ged";
+    cleanup_file(output_file);
+
+    // Streaming should show progress updates
+    let output = run_rfamily(&[
+        "generate",
+        "--preset",
+        "german",
+        "--count",
+        "5000",
+        "--output",
+        output_file,
+        "--streaming",
+    ]);
+
+    assert!(
+        output.status.success(),
+        "Streaming with progress should succeed"
+    );
+
+    // Check for progress indicators in output
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Should see progress or completion messages
+    assert!(
+        stderr.contains("Generating")
+            || stdout.contains("Generating")
+            || stdout.contains("complete"),
+        "Should show progress or completion message"
+    );
+
+    let (valid, _) = verify_gedcom_file(output_file);
+    assert!(valid, "Streaming output should be valid GEDCOM");
+
+    cleanup_file(output_file);
+}
