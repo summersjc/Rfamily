@@ -206,6 +206,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "compression")]
     fn test_compressed_writer() {
         let temp_file = "/tmp/test_compressed.ged.gz";
         let mut writer = OutputWriter::create(temp_file, true).unwrap();
