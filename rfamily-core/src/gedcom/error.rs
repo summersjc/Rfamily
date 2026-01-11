@@ -3,7 +3,7 @@ use std::fmt;
 /// Errors that can occur during GEDCOM parsing
 #[derive(Debug, Clone)]
 pub enum ParseError {
-    /// Invalid line format (doesn't match LEVEL TAG [VALUE])
+    /// Invalid line format (doesn't match `LEVEL TAG [VALUE]` pattern)
     InvalidLineFormat { line_num: usize, line: String },
 
     /// Invalid level number

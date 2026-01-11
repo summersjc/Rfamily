@@ -286,7 +286,9 @@ for warning in parser.warnings() {
 
 ## Examples
 
-Three working examples are provided in `rfamily-core/examples/`:
+Six working examples are provided in `rfamily-core/examples/`:
+
+### GEDCOM Parsing and Generation
 
 ```bash
 # Example 1: Parse an existing GEDCOM file
@@ -299,10 +301,26 @@ cargo run -p rfamily-core --example generate_ious
 cargo run -p rfamily-core --example round_trip
 ```
 
-**Example Output:**
+### Performance Features
+
+```bash
+# Example 4: Streaming generation (memory-efficient)
+cargo run -p rfamily-core --example streaming_generation --release
+
+# Example 5: Compression example (size comparison)
+cargo run -p rfamily-core --example compression_example --release
+
+# Example 6: Combined features (streaming + compression)
+cargo run -p rfamily-core --example combined_features --release
+```
+
+**Example Descriptions:**
 - `parse_gedcom`: Parses GEDCOM files, shows individuals/families, validates references
 - `generate_ious`: Creates a 200-person IOUS family tree with 3 marriages, 5 siblings, 4 generations
 - `round_trip`: Generates 100 individuals, parses them back, verifies data integrity
+- `streaming_generation`: Demonstrates memory-efficient batch generation with 100K records
+- `compression_example`: Compares plain vs compressed output with performance metrics
+- `combined_features`: Shows streaming + compression for large datasets (500K records)
 
 ## Available Language Presets
 

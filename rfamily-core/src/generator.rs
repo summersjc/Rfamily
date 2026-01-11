@@ -705,7 +705,7 @@ impl GedcomGenerator {
     fn write_header<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
         writeln!(writer, "0 HEAD")?;
         writeln!(writer, "1 SOUR Rfamily")?;
-        writeln!(writer, "2 VERS 0.2.0")?;
+        writeln!(writer, "2 VERS 0.3.0")?;
         writeln!(writer, "2 NAME Rfamily - GEDCOM Generator with Rulesets")?;
         writeln!(writer, "1 DEST ANY")?;
         writeln!(writer, "1 DATE {}", chrono::Utc::now().format("%d %b %Y"))?;

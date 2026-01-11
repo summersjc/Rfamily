@@ -1144,7 +1144,7 @@ checksum = "7a2d987857b319362043e95f5353c0535c1f58eec5336fdfcf626430af7def58"
 
 [[package]]
 name = "rfamily-cli"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "clap",
  "indicatif",
@@ -1154,7 +1154,7 @@ dependencies = [
 
 [[package]]
 name = "rfamily-common"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "rfamily-core",
  "serde",
@@ -1164,7 +1164,7 @@ dependencies = [
 
 [[package]]
 name = "rfamily-core"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "criterion",
@@ -1178,7 +1178,7 @@ dependencies = [
 
 [[package]]
 name = "rfamily-web"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "axum",
