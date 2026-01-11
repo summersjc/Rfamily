@@ -53,6 +53,8 @@ jobs:
       run: cargo bench -p rfamily-core --bench parser_bench -- --sample-size 10 --warm-up-time 1 --measurement-time 3
     - name: Run quick benchmarks (generator)
       run: cargo bench -p rfamily-core --bench generator_bench -- --sample-size 10 --warm-up-time 1 --measurement-time 3
+    - name: Run quick benchmarks (IOUS)
+      run: cargo bench -p rfamily-core --bench ious_bench -- --sample-size 10 --warm-up-time 1 --measurement-time 3
 
   security:
     name: Security Audit
