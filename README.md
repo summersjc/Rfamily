@@ -1,5 +1,6 @@
 # Rfamily
 
+[![Release](https://img.shields.io/github/v/release/summersjc/Rfamily?color=blue)](https://github.com/summersjc/Rfamily/releases/latest)
 [![Rust CI](https://github.com/summersjc/Rfamily/actions/workflows/rust.yml/badge.svg)](https://github.com/summersjc/Rfamily/actions/workflows/rust.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust Version](https://img.shields.io/badge/rust-1.70%2B-blue.svg)](https://www.rust-lang.org)
