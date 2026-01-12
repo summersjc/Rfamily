@@ -289,7 +289,7 @@ fn handle_generate(
     // Adjust filename for compression
     let final_output = adjust_filename_for_compression(&output, compress);
 
-    println!("Rfamily v0.2.0 - Generate");
+    println!("Rfamily v0.3.0 - Generate");
     println!("Generating {} individuals to {}", count, final_output);
     if compress {
         println!("Compression: enabled (gzip)");
@@ -383,7 +383,7 @@ fn handle_generate_ious(
         std::process::exit(1);
     }
 
-    println!("Rfamily v0.2.0 - Generate IOUS");
+    println!("Rfamily v0.3.0 - Generate IOUS");
     println!("Configuration:");
     println!("  Marriages: {}", marriages);
     println!("  Children per marriage (mean): {}", children_per_marriage);
