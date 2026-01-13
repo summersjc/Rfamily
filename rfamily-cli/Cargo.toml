@@ -12,5 +12,5 @@ path = "src/main.rs"
 [dependencies]
 rfamily-core = { path = "../rfamily-core" }
 clap = { version = "4.5", features = ["derive"] }
-indicatif = "0.17"
+indicatif = "0.18"
 rand.workspace = true
