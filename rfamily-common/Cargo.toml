@@ -9,4 +9,4 @@ license.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 rfamily-core = { path = "../rfamily-core" }
-utoipa = "4.2"
+utoipa = "5.4"
